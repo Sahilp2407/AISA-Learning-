@@ -70,15 +70,25 @@ export default function Navbar({ currentScreen, onNavigate, user, onLogout }) {
               </nav>
 
               <button
+                id="navbar-admin-login-btn"
+                onClick={() => onNavigate('admin_login')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-charcoal hover:text-[#ED7D31] bg-white hover:bg-amber-50 border border-borderLight transition-all focus:outline-none focus:ring-2 focus:ring-[#ED7D31] shadow-xs cursor-pointer"
+                title="Faculty & Administrator Portal"
+              >
+                <ShieldCheck className="w-4 h-4 text-[#ED7D31]" />
+                <span>Admin Login</span>
+              </button>
+
+              <button
                 id="navbar-login-btn"
                 onClick={() => onNavigate('login')}
-                className="gold-button inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border border-gold-600/30 shadow-sm focus:outline-none focus:ring-2 focus:ring-gold-500 cursor-pointer"
+                className="gold-button inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-bold border border-gold-600/30 shadow-sm focus:outline-none focus:ring-2 focus:ring-gold-500 cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Login</span>
+                <span>Student Login</span>
               </button>
             </div>
-          ) : currentScreen === 'login' ? (
+          ) : (currentScreen === 'login' || currentScreen === 'admin_login') ? (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onNavigate('landing')}

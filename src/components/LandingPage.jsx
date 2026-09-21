@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Sparkles, 
@@ -24,7 +24,12 @@ import {
   Database,
   Code2,
   Terminal,
-  Calculator
+  Calculator,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Video
 } from 'lucide-react';
 import ThreeHeroCanvas from './ThreeHeroCanvas';
 import Footer from './Footer';
@@ -52,37 +57,71 @@ const staggerContainer = {
 
 export default function LandingPage({ onNavigate }) {
   const [openFaq, setOpenFaq] = useState(0);
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
+  const [, setIsVideoAvailable] = useState(true);
+
+  // Auto-play video on mount
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {
+        if (videoRef.current) {
+          videoRef.current.muted = true;
+          videoRef.current.play().catch(() => {});
+        }
+      });
+    }
+  }, []);
+
+  const [selectedCourseTab, setSelectedCourseTab] = useState('All');
 
   const courseCards = [
     {
       code: 'CS301',
       title: 'Database Management Systems',
+      category: 'Systems',
       desc: 'B+ Tree indexing, 3NF/BCNF normalization proofs, ACID transaction recovery & serializability.',
       units: '5 Units · 48 Topics',
       icon: Database,
+      tags: ['SQL & NoSQL', 'ACID Transactions', 'B+ Trees'],
+      difficulty: 'High Yield',
     },
     {
       code: 'CS204',
       title: 'Data Structures & Algorithms',
+      category: 'Algorithms',
       desc: 'Dynamic programming state formulations, graph traversals, amortized asymptotic complexity.',
       units: '6 Units · 62 Topics',
       icon: Code2,
+      tags: ['DP Memoization', 'Graph Traversals', 'Big-O Proofs'],
+      difficulty: 'Core Exam',
     },
     {
       code: 'CS308',
       title: 'Operating Systems',
+      category: 'Systems',
       desc: 'Process concurrency, Coffman deadlock detection, virtual memory page replacement algorithms.',
       units: '5 Units · 54 Topics',
       icon: Terminal,
+      tags: ['Semaphores', 'Deadlock Detection', 'Virtual Memory'],
+      difficulty: 'Crucial Concept',
     },
     {
       code: 'MA201',
       title: 'Engineering Mathematics',
+      category: 'Mathematics',
       desc: 'Fourier transforms, Laplace equations, multivariable calculus & linear algebra derivations.',
       units: '4 Units · 40 Topics',
       icon: Calculator,
+      tags: ['Fourier Series', 'Laplace Transforms', 'Eigenvalues'],
+      difficulty: 'Foundation',
     },
   ];
+
+  const filteredCourses = selectedCourseTab === 'All' 
+    ? courseCards 
+    : courseCards.filter(c => c.category === selectedCourseTab);
 
   const faqs = [
     {
@@ -112,49 +151,60 @@ export default function LandingPage({ onNavigate }) {
         {/* Subtle Three.js canvas in deep background */}
         <ThreeHeroCanvas />
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-12 items-center relative z-10">
           
           {/* LEFT COLUMN: HERO COPY */}
           <motion.div 
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-6 space-y-6 text-left"
+            className="lg:col-span-5 space-y-6 text-left"
           >
-            {/* Pill Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-borderLight shadow-xs">
-              <span className="w-2 h-2 rounded-full bg-successSoft animate-pulse"></span>
-              <span className="text-charcoal font-medium">Syllabus-Grounded AI · Automatic Exam Lockouts</span>
+            {/* Modern Glassmorphic Pill Badge */}
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full text-xs font-semibold bg-white/90 backdrop-blur-md border border-amber-200/80 shadow-xs hover:border-[#ED7D31]/40 transition-colors">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-slate-800 font-bold tracking-tight">Syllabus-Grounded AI</span>
+              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+              <span className="text-[#ED7D31] font-bold flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Automatic Exam Lockouts
+              </span>
             </div>
 
-            {/* Main Headline */}
-            <div className="space-y-1">
-              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[58px] font-extrabold tracking-tight text-charcoal leading-[1.15]">
+            {/* Main Headline with High-End Typographic Rhythm */}
+            <div className="space-y-1.5">
+              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[54px] xl:text-[60px] font-black tracking-tight text-slate-900 leading-[1.08]">
                 Master your syllabus.
               </h1>
-              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[58px] font-extrabold tracking-tight text-charcoal leading-[1.15]">
+              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[54px] xl:text-[60px] font-black tracking-tight text-slate-900 leading-[1.08]">
                 Ace your exams.
               </h1>
-              <div className="pt-1.5">
-                <span className="inline-block bg-gradient-to-r from-gold via-amber-500 to-amber-600 text-white font-sans text-3xl sm:text-4xl lg:text-[50px] font-extrabold px-3.5 py-1 rounded-2xl shadow-sm tracking-tight">
-                  Stay honor-safe.
-                </span>
+              <div className="pt-2 flex items-center flex-wrap gap-3">
+                <div className="relative inline-flex items-center gap-2.5 px-4 py-1.5 rounded-2xl bg-gradient-to-r from-[#ED7D31] via-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25 border border-white/20">
+                  <ShieldCheck className="w-6 h-6 text-amber-200" />
+                  <span className="font-sans text-3xl sm:text-4xl lg:text-[46px] xl:text-[50px] font-black tracking-tight">
+                    Stay honor-safe.
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Explanatory Subtitle */}
-            <p className="text-sm sm:text-base md:text-lg text-charcoal-muted leading-relaxed max-w-xl">
-              Ask questions from your active college syllabus. AI assistance automatically pauses during scheduled exam windows — so you learn deeply without risking your academic integrity.
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed max-w-xl font-normal">
+              Ask questions directly from your active college syllabus. AI assistance automatically pauses during scheduled exam windows — so you learn deeply without risking your academic integrity.
             </p>
 
             {/* Dual Action Buttons */}
             <div className="flex flex-wrap items-center gap-4 pt-1">
               <button
                 onClick={() => onNavigate('login')}
-                className="gold-button px-7 py-3.5 rounded-2xl text-sm font-bold shadow-md flex items-center gap-2 cursor-pointer"
+                className="group px-7 py-3.5 rounded-2xl text-sm font-extrabold text-white bg-gradient-to-r from-[#ED7D31] to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2.5 cursor-pointer"
               >
                 <span>Choose your course</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <button
@@ -162,47 +212,168 @@ export default function LandingPage({ onNavigate }) {
                   const el = document.getElementById('features');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="px-6 py-3.5 rounded-2xl text-sm font-bold text-charcoal bg-white hover:bg-wheat-100 border border-borderLight shadow-xs transition-all cursor-pointer"
+                className="group px-6 py-3.5 rounded-2xl text-sm font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md transition-all duration-200 flex items-center gap-2 cursor-pointer"
               >
+                <Lock className="w-4 h-4 text-slate-400 group-hover:text-[#ED7D31] transition-colors" />
                 <span>See exam lockout</span>
               </button>
             </div>
 
-            {/* 4 Feature Checklist Pills */}
-            <div className="grid grid-cols-2 gap-2.5 max-w-md pt-2 text-xs font-semibold text-charcoal">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-gold flex-shrink-0"></span>
-                <span>Free student access</span>
+            {/* 4 Feature Micro-Cards Grid */}
+            <div className="grid grid-cols-2 gap-2.5 max-w-lg pt-2">
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/70 border border-slate-200/70 backdrop-blur-xs shadow-2xs hover:border-[#ED7D31]/30 transition-colors">
+                <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Free student access</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-gold flex-shrink-0"></span>
-                <span>100% Exam-safe lock</span>
+
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/70 border border-slate-200/70 backdrop-blur-xs shadow-2xs hover:border-[#ED7D31]/30 transition-colors">
+                <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">100% Exam-safe lock</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-gold flex-shrink-0"></span>
-                <span>Socratic derivations</span>
+
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/70 border border-slate-200/70 backdrop-blur-xs shadow-2xs hover:border-[#ED7D31]/30 transition-colors">
+                <div className="w-6 h-6 rounded-lg bg-orange-50 text-[#ED7D31] flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Socratic derivations</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-gold flex-shrink-0"></span>
-                <span>Faculty review audit trail</span>
+
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/70 border border-slate-200/70 backdrop-blur-xs shadow-2xs hover:border-[#ED7D31]/30 transition-colors">
+                <div className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                  <GraduationCap className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold text-slate-700">Faculty review audit trail</span>
+              </div>
+            </div>
+
+            {/* Social Proof & Rating Strip */}
+            <div className="flex items-center gap-4 pt-2 border-t border-slate-200/70 max-w-lg">
+              <div className="flex -space-x-2 overflow-hidden">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+                  A
+                </div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+                  R
+                </div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white font-black text-xs flex items-center justify-center border-2 border-white shadow-xs">
+                  S
+                </div>
+                <div className="w-8 h-8 rounded-full bg-slate-900 text-amber-400 font-bold text-[10px] flex items-center justify-center border-2 border-white shadow-xs">
+                  +1.4k
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-600">
+                <div className="flex items-center gap-1 text-amber-500 font-bold">
+                  <span>★★★★★</span>
+                  <span className="text-slate-900 font-black ml-1">4.9 / 5.0</span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium">Trusted across B.Tech CSE & Engineering cohorts</p>
               </div>
             </div>
           </motion.div>
 
-          {/* RIGHT COLUMN: HERO STUDENTS PHOTO */}
+          {/* RIGHT COLUMN: HERO ACADEMIC AI VIDEO / MEDIA SHOWCASE */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="lg:col-span-6 w-full flex flex-col items-center justify-center relative"
+            className="lg:col-span-7 w-full flex flex-col items-center justify-center relative"
           >
-            <div className="relative w-full max-w-lg">
-              <div className="relative rounded-3xl overflow-hidden shadow-soft-lg border-2 border-white bg-white/60 hover:shadow-xl transition-shadow duration-300">
-                <img
-                  src={studentsTrioImg}
-                  alt="University scholars studying with AISA"
-                  className="w-full h-auto object-cover"
-                />
+            <div className="relative w-full max-w-2xl lg:max-w-none">
+              {/* Decorative Background Glow */}
+              <div className="absolute -inset-1.5 bg-gradient-to-r from-[#ED7D31] via-amber-400 to-orange-500 rounded-[32px] blur-md opacity-35" />
+
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-white/90 bg-slate-950 group aspect-video">
+                
+                {/* Embedded HTML5 Video with Audio, Auto-loop and Poster Fallback */}
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  loop
+                  muted={isMuted}
+                  playsInline
+                  preload="auto"
+                  poster={studentsTrioImg}
+                  onLoadedData={() => setIsVideoAvailable(true)}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onClick={() => {
+                    if (videoRef.current) {
+                      if (isPlaying) {
+                        videoRef.current.pause();
+                      } else {
+                        videoRef.current.play();
+                      }
+                      setIsPlaying(!isPlaying);
+                    }
+                  }}
+                  className="w-full h-full object-cover cursor-pointer"
+                >
+                  <source src="/gemini_generated_video_5ff571c6.mp4" type="video/mp4" />
+                  <source src="/hero-video.mp4" type="video/mp4" />
+                  <img
+                    src={studentsTrioImg}
+                    alt="University scholars studying with AISA"
+                    className="w-full h-full object-cover"
+                  />
+                </video>
+
+                {/* Subtle Bottom Gradient for Controls Contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
+
+                {/* Central Play Button Overlay when Paused */}
+                {!isPlaying && (
+                  <button
+                    onClick={() => {
+                      if (videoRef.current) {
+                        videoRef.current.play();
+                        setIsPlaying(true);
+                      }
+                    }}
+                    className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-[#ED7D31]/90 hover:bg-[#ED7D31] text-white flex items-center justify-center shadow-2xl backdrop-blur-sm cursor-pointer transition-transform hover:scale-110 active:scale-95 z-20"
+                    title="Play Video"
+                  >
+                    <Play className="w-7 h-7 ml-0.5 fill-current" />
+                  </button>
+                )}
+
+                {/* Clean Bottom-Right Interactive Video Controls */}
+                <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+                  <button
+                    onClick={() => {
+                      setIsMuted(!isMuted);
+                      if (videoRef.current) {
+                        videoRef.current.muted = !isMuted;
+                      }
+                    }}
+                    className="w-9 h-9 rounded-xl bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
+                    title={isMuted ? "Unmute Audio" : "Mute Audio"}
+                  >
+                    {isMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-amber-400" />}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (videoRef.current) {
+                        if (isPlaying) {
+                          videoRef.current.pause();
+                        } else {
+                          videoRef.current.play();
+                        }
+                        setIsPlaying(!isPlaying);
+                      }
+                    }}
+                    className="w-9 h-9 rounded-xl bg-[#ED7D31] hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-[#ED7D31]/30 transition-all cursor-pointer"
+                    title={isPlaying ? "Pause Video" : "Play Video"}
+                  >
+                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5 fill-current" />}
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -274,70 +445,137 @@ export default function LandingPage({ onNavigate }) {
       </div>
 
       {/* 3. SYLLABUS INTELLIGENCE: COURSE MODULES SECTION (SCROLL REVEAL) */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* 3. SYLLABUS INTELLIGENCE: COURSE MODULES SECTION (DYNAMIC ANIMATIONS & FILTERS) */}
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative overflow-hidden">
+        {/* Ambient Warm Floating Glow Behind Cards */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[360px] bg-gradient-to-tr from-amber-400/15 via-orange-500/10 to-transparent blur-3xl pointer-events-none rounded-full -z-10" />
+
         <motion.div 
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.2 }}
           variants={fadeInUp}
-          className="text-center max-w-3xl mx-auto mb-14"
+          className="text-center max-w-3xl mx-auto mb-10"
         >
-          <span className="text-xs font-bold uppercase tracking-widest text-[#ED7D31] bg-gold/15 px-3 py-1 rounded-full border border-gold/30">
-            ⚡ SYLLABUS INTELLIGENCE
-          </span>
-          <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-extrabold text-charcoal mt-3 mb-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest text-[#ED7D31] bg-orange-50/90 border border-orange-200/80 shadow-2xs mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-spin" style={{ animationDuration: '6s' }} />
+            <span>Syllabus Intelligence Engine</span>
+          </div>
+
+          <h2 className="font-sans text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight mb-3">
             Course modules supported right now
           </h2>
-          <p className="text-sm sm:text-base text-charcoal-muted leading-relaxed">
-            Curriculum tracks from top engineering departments. Covers Unit 1 to Unit 5 with derivations, proofs, and textbook references.
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl mx-auto font-normal">
+            Grounded directly in approved engineering department syllabi. Covers Unit 1 to Unit 5 with step-by-step Socratic derivations, proofs, and textbook exam benchmarks.
           </p>
+
+          {/* Interactive Filter Pills with Spring Physics */}
+          <div className="flex items-center justify-center gap-2 pt-6 flex-wrap">
+            {['All', 'Systems', 'Algorithms', 'Mathematics'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setSelectedCourseTab(tab)}
+                className={`relative px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  selectedCourseTab === tab 
+                    ? 'text-white shadow-md shadow-orange-500/25' 
+                    : 'text-slate-600 bg-white/90 hover:bg-slate-100 border border-slate-200/80'
+                }`}
+              >
+                {selectedCourseTab === tab && (
+                  <motion.div
+                    layoutId="activeCourseTab"
+                    className="absolute inset-0 bg-gradient-to-r from-[#ED7D31] to-amber-500 rounded-full -z-10"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                  />
+                )}
+                <span>{tab === 'All' ? '⚡ All Modules' : tab}</span>
+              </button>
+            ))}
+          </div>
         </motion.div>
 
+        {/* Dynamic Card Grid with High-End Spring Hover & Shimmer Light Beams */}
         <motion.div 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.15 }}
-          variants={staggerContainer}
+          layout
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          {courseCards.map((course, idx) => {
-            const Icon = course.icon;
-            return (
-              <motion.div
-                key={idx}
-                variants={fadeInUp}
-                whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                onClick={() => onNavigate('login')}
-                className="bg-white rounded-3xl p-6 border border-borderLight shadow-sm hover:shadow-soft-lg hover:border-gold transition-all duration-300 flex flex-col justify-between cursor-pointer group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-gold/15 text-[#ED7D31] flex items-center justify-center font-bold">
-                      <Icon className="w-5 h-5" />
+          <AnimatePresence mode="popLayout">
+            {filteredCourses.map((course) => {
+              const Icon = course.icon;
+              return (
+                <motion.div
+                  key={course.code}
+                  layout
+                  initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: -20 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                  whileHover={{ 
+                    y: -10, 
+                    scale: 1.025,
+                    transition: { type: "spring", stiffness: 400, damping: 20 }
+                  }}
+                  onClick={() => onNavigate('login')}
+                  className="relative group bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm hover:shadow-2xl hover:shadow-orange-500/15 hover:border-[#ED7D31]/60 transition-all duration-300 flex flex-col justify-between cursor-pointer overflow-hidden backdrop-blur-xs"
+                >
+                  {/* Top Glowing Gradient Beam Indicator */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#ED7D31] via-amber-400 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  {/* Shimmer Light Reflection Sweep on Hover */}
+                  <div className="absolute -inset-full top-0 bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:translate-x-full duration-1000 transform -skew-x-12 transition-transform pointer-events-none" />
+
+                  <div>
+                    {/* Header Row: Icon + Code Tag + Difficulty Pill */}
+                    <div className="flex items-center justify-between mb-5">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-[#ED7D31] flex items-center justify-center font-bold shadow-xs group-hover:scale-110 group-hover:bg-gradient-to-br group-hover:from-[#ED7D31] group-hover:to-amber-500 group-hover:text-white group-hover:shadow-md group-hover:shadow-orange-500/30 transition-all duration-300">
+                        <Icon className="w-5 h-5 transition-transform group-hover:rotate-6" />
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-[10px] font-mono font-black text-[#ED7D31] bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200/70 group-hover:bg-[#ED7D31] group-hover:text-white transition-colors duration-200">
+                          {course.code}
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                          {course.difficulty}
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-bold text-[#ED7D31] bg-gold/15 px-2.5 py-0.5 rounded-full border border-gold/30">
-                      {course.code}
-                    </span>
+
+                    {/* Title */}
+                    <h3 className="font-sans font-extrabold text-lg text-slate-900 mb-2 group-hover:text-[#ED7D31] transition-colors line-clamp-1">
+                      {course.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-xs text-slate-500 leading-relaxed mb-4 line-clamp-2">
+                      {course.desc}
+                    </p>
+
+                    {/* Micro Topic Chips */}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {course.tags.map((tag, tIdx) => (
+                        <span 
+                          key={tIdx} 
+                          className="px-2 py-0.5 rounded-md bg-slate-100/90 text-slate-600 text-[10px] font-semibold border border-slate-200/60 group-hover:border-amber-200 group-hover:bg-amber-50/60 transition-colors"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
-                  <h3 className="font-sans font-bold text-lg text-charcoal mb-2 group-hover:text-gold transition-colors">
-                    {course.title}
-                  </h3>
-
-                  <p className="text-xs text-charcoal-muted leading-relaxed mb-4">
-                    {course.desc}
-                  </p>
-                </div>
-
-                <div className="pt-4 border-t border-borderLight flex items-center justify-between text-xs font-bold text-charcoal">
-                  <span className="text-charcoal-muted font-mono">{course.units}</span>
-                  <span className="text-gold group-hover:translate-x-1 transition-transform flex items-center gap-1 font-bold">
-                    Start →
-                  </span>
-                </div>
-              </motion.div>
-            );
-          })}
+                  {/* Bottom Action Footer with Animated Sliding Arrow */}
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-slate-400 font-mono font-medium text-[11px]">{course.units}</span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-[#ED7D31] bg-amber-50 group-hover:bg-[#ED7D31] group-hover:text-white transition-all duration-200 shadow-2xs">
+                      <span>Start</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </motion.div>
       </section>
 

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import StudentNotesHub from './StudentNotesHub';
+import FormattedChatMessage from './FormattedChatMessage';
 import { 
   GraduationCap, 
   BookOpen, 
@@ -40,141 +42,43 @@ import {
   PanelRightOpen,
   Check,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  Key,
+  Download,
+  BookCheck,
+  BrainCircuit,
+  FileCode,
+  Award,
+  Calendar,
+  Timer,
+  Lock,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  CheckCheck,
+  Mail,
+  Inbox,
+  ExternalLink,
+  Share2
 } from 'lucide-react';
+import { generateSocraticResponse, getGeminiApiKey, setGeminiApiKey } from '../services/geminiService';
+import { SEMESTERS_DATA } from '../data/curriculumData';
+import { formatTime12Hr, getTimeString } from '../services/examLockService';
+import { 
+  getSavedBroadcastNotes, 
+  getStudentReadNotes, 
+  markNoteAsReadByStudent 
+} from '../services/notesBroadcastService';
 
-// Complete University Engineering Curriculum Data by Semester
-const SEMESTERS_DATA = [
-  {
-    id: 1,
-    name: 'Semester 1',
-    code: 'SEM-01',
-    subjectCount: 8,
-    progress: 0,
-    color: 'from-amber-500/20 to-orange-500/10',
-    subjects: [
-      { id: 'cs101', name: 'Computer Science Foundations & Society - Law and Ethics - IT', code: 'CS101', units: 5, category: 'Core CS', desc: 'Ethics, digital law, societal impact and computing history.' },
-      { id: 'cs102', name: 'SoftSkills - Communication Skills & Problem Solving', code: 'CS102', units: 4, category: 'Professional', desc: 'Technical articulation, active listening and structured analysis.' },
-      { id: 'cs103', name: 'Mathematics', code: 'CS103', units: 5, category: 'Maths', desc: 'Set theory, propositional logic, differential calculus and matrices.' },
-      { id: 'cs104', name: 'Git & GitHub Linkedin', code: 'CS104', units: 3, category: 'Tools', desc: 'Version control branching, open-source workflow and profile building.' },
-      { id: 'cs105', name: 'Scratch Programming', code: 'CS105', units: 3, category: 'Foundations', desc: 'Event-driven visual logic, state variables and basic algorithms.' },
-      { id: 'cs106', name: 'Python', code: 'CS106', units: 5, category: 'Programming', desc: 'Data structures, OOP, file handling, libraries and unit tests.' },
-      { id: 'cs107', name: 'No Code Platform & Google Sheet', code: 'CS107', units: 3, category: 'Tools', desc: 'App automation, complex formulas, pivot models and data pipelines.' },
-      { id: 'cs108', name: 'C++', code: 'CS108', units: 5, category: 'Programming', desc: 'Pointers, memory layout, classes, templates and STL containers.' }
-    ]
-  },
-  {
-    id: 2,
-    name: 'Semester 2',
-    code: 'SEM-02',
-    subjectCount: 11,
-    progress: 15,
-    color: 'from-orange-500/20 to-amber-500/10',
-    subjects: [
-      { id: 'cs201', name: 'Java Programming', code: 'CS201', units: 5, category: 'Programming', desc: 'OOP, JVM internals, multithreading, concurrency and streams.' },
-      { id: 'cs202', name: 'Computer Networking', code: 'CS202', units: 5, category: 'Core CS', desc: 'OSI layers, TCP/IP, routing algorithms, DNS, HTTP/3 and sockets.' },
-      { id: 'cs203', name: 'Data Structures and Algorithm - I', code: 'CS203', units: 5, category: 'Core CS', desc: 'Arrays, linked lists, stacks, queues, hash maps and trees.' },
-      { id: 'cs204', name: 'DBMS - SQL', code: 'CS204', units: 5, category: 'Core CS', desc: 'ER diagrams, SQL queries, normalization 3NF/BCNF, ACID & indexing.' },
-      { id: 'cs205', name: 'HTML 5', code: 'CS205', units: 4, category: 'Web', desc: 'Accessible semantic structure, media APIs and canvas elements.' },
-      { id: 'cs206', name: 'CSS 3', code: 'CS206', units: 4, category: 'Web', desc: 'Flexbox, CSS Grid, custom properties, animations and media queries.' },
-      { id: 'cs207', name: 'Javascript', code: 'CS207', units: 5, category: 'Web', desc: 'Closures, promises, async/await, event loop and DOM API.' },
-      { id: 'cs208', name: 'Design Thinking & Prototyping + UI/UX + Figma', code: 'CS208', units: 4, category: 'Design', desc: 'User flows, wireframes, design systems and usability testing.' },
-      { id: 'cs209', name: 'How Products are built + Pricing Strategies and Implementing payment stack in your applications', code: 'CS209', units: 4, category: 'Product', desc: 'Product requirements, metrics, unit economics and API monetization.' },
-      { id: 'cs210', name: 'Foreign Language German A1', code: 'CS210', units: 3, category: 'Language', desc: 'Conversational grammar, technical terms and dialogue comprehension.' },
-      { id: 'cs211', name: 'Sem2_Student Project Building & Evaluation', code: 'CS211', units: 5, category: 'Projects', desc: 'Full-stack end-to-end prototype development and faculty viva.' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Semester 3',
-    code: 'SEM-03',
-    subjectCount: 6,
-    progress: 0,
-    color: 'from-amber-500/20 to-yellow-500/10',
-    subjects: [
-      { id: 'cs301', name: 'Data Structures & Algorithms - II', code: 'CS301', units: 5, category: 'Core CS', desc: 'Graphs, BFS/DFS, Dijkstra, Dynamic Programming, Trie and AVL trees.' },
-      { id: 'cs302', name: 'Operating Systems & Concurrency', code: 'CS302', units: 5, category: 'Core CS', desc: 'Processes, CPU scheduling, semaphores, deadlock and virtual memory.' },
-      { id: 'cs303', name: 'Computer Architecture & Organisation', code: 'CS303', units: 5, category: 'Core CS', desc: 'Instruction sets, pipelining, cache hierarchy and RISC-V.' },
-      { id: 'cs304', name: 'Probability & Statistics for Engineers', code: 'CS304', units: 4, category: 'Maths', desc: 'Distributions, Bayes theorem, hypothesis testing and Markov chains.' },
-      { id: 'cs305', name: 'Backend Engineering with Node.js', code: 'CS305', units: 5, category: 'Web', desc: 'REST APIs, middleware, authentication, WebSockets and security.' },
-      { id: 'cs306', name: 'Software Design Patterns & Clean Code', code: 'CS306', units: 4, category: 'Core CS', desc: 'SOLID principles, Singleton, Factory, Observer and Refactoring.' }
-    ]
-  },
-  {
-    id: 4,
-    name: 'Semester 4',
-    code: 'SEM-04',
-    subjectCount: 6,
-    progress: 0,
-    color: 'from-orange-500/20 to-red-500/10',
-    subjects: [
-      { id: 'cs401', name: 'Design & Analysis of Algorithms', code: 'CS401', units: 5, category: 'Core CS', desc: 'Divide & conquer, greedy, NP-completeness and amortized analysis.' },
-      { id: 'cs402', name: 'Theory of Computation & Automata', code: 'CS402', units: 5, category: 'Core CS', desc: 'DFA, NFA, Context-Free Grammars, Turing Machines and decidability.' },
-      { id: 'cs403', name: 'Cloud Computing & Distributed Systems', code: 'CS403', units: 5, category: 'Cloud', desc: 'Microservices, Docker, Kubernetes, AWS architecture and CAP theorem.' },
-      { id: 'cs404', name: 'Microprocessors & Embedded IoT', code: 'CS404', units: 4, category: 'Hardware', desc: '8086 architecture, interfacing, timers, interrupts and sensors.' },
-      { id: 'cs405', name: 'Advanced React & Frontend Frameworks', code: 'CS405', units: 5, category: 'Web', desc: 'State machines, SSR, performance profiling and custom hooks.' },
-      { id: 'cs406', name: 'Cybersecurity Fundamentals & Cryptography', code: 'CS406', units: 4, category: 'Security', desc: 'Symmetric/asymmetric keys, hashing, TLS and OWASP vulnerabilities.' }
-    ]
-  },
-  {
-    id: 5,
-    name: 'Semester 5',
-    code: 'SEM-05',
-    subjectCount: 5,
-    progress: 0,
-    color: 'from-amber-600/20 to-orange-600/10',
-    subjects: [
-      { id: 'cs501', name: 'Cross Platform App Development', code: 'CS501', units: 5, category: 'Mobile', desc: 'React Native, Flutter, native device APIs, state and App Store deploy.' },
-      { id: 'cs502', name: 'Machine Learning Fundamentals', code: 'CS502', units: 5, category: 'AI/ML', desc: 'Supervised/unsupervised learning, gradient descent, SVM and PCA.' },
-      { id: 'cs503', name: 'Physics', code: 'CS503', units: 4, category: 'Science', desc: 'Quantum states, band theory, p-n junctions and semiconductor physics.' },
-      { id: 'cs504', name: 'Chemistry', code: 'CS504', units: 4, category: 'Science', desc: 'Nanomaterials, polymers, electrochemistry and corrosion control.' },
-      { id: 'cs505', name: 'Software Engineering & Project Management', code: 'CS505', units: 5, category: 'Core CS', desc: 'Scrum cycles, CI/CD pipelines, QA testing, Jira and code reviews.' }
-    ]
-  },
-  {
-    id: 6,
-    name: 'Semester 6',
-    code: 'SEM-06',
-    subjectCount: 5,
-    progress: 0,
-    color: 'from-orange-500/20 to-amber-500/10',
-    subjects: [
-      { id: 'cs601', name: 'Deep Learning & Neural Architectures', code: 'CS601', units: 5, category: 'AI/ML', desc: 'CNNs, RNNs, Transformers, attention mechanisms and PyTorch.' },
-      { id: 'cs602', name: 'Compiler Design & Code Optimization', code: 'CS602', units: 5, category: 'Core CS', desc: 'Lexical analysis, syntax parsing (LL/LR), AST and code generation.' },
-      { id: 'cs603', name: 'DevOps & Site Reliability Engineering', code: 'CS603', units: 4, category: 'Cloud', desc: 'Infrastructure as Code (Terraform), monitoring, Prometheus and alerts.' },
-      { id: 'cs604', name: 'Distributed Databases & Big Data', code: 'CS604', units: 5, category: 'Data', desc: 'NoSQL, Cassandra, Apache Spark, Kafka and sharding topologies.' },
-      { id: 'cs605', name: 'AI Ethics & Responsible Computing', code: 'CS605', units: 3, category: 'Core CS', desc: 'Bias audit, explainable AI, GDPR compliance and model accountability.' }
-    ]
-  },
-  {
-    id: 7,
-    name: 'Semester 7',
-    code: 'SEM-07',
-    subjectCount: 4,
-    progress: 0,
-    color: 'from-amber-500/20 to-yellow-500/10',
-    subjects: [
-      { id: 'cs701', name: 'Natural Language Processing & LLMs', code: 'CS701', units: 5, category: 'AI/ML', desc: 'Tokenization, embeddings, fine-tuning, RAG and prompt engineering.' },
-      { id: 'cs702', name: 'Computer Vision & Image Processing', code: 'CS702', units: 5, category: 'AI/ML', desc: 'Filtering, edge detection, object detection (YOLO) and segmentation.' },
-      { id: 'cs703', name: 'Blockchain & Decentralized Applications', code: 'CS703', units: 4, category: 'Special', desc: 'Consensus protocols, Ethereum smart contracts, Solidity and Web3.' },
-      { id: 'cs704', name: 'Research Seminar & Technical Literature', code: 'CS704', units: 3, category: 'Research', desc: 'IEEE paper reading, citation synthesis and proposal drafting.' }
-    ]
-  },
-  {
-    id: 8,
-    name: 'Semester 8',
-    code: 'SEM-08',
-    subjectCount: 2,
-    progress: 0,
-    color: 'from-orange-500/20 to-amber-500/10',
-    subjects: [
-      { id: 'cs801', name: 'Major Capstone Engineering Project', code: 'CS801', units: 10, category: 'Capstone', desc: 'Industry-grade software platform deployment, benchmarking and defense.' },
-      { id: 'cs802', name: 'Industry Internship & Practicum Viva', code: 'CS802', units: 8, category: 'Industry', desc: 'Full-time industrial training report, mentor review and evaluation.' }
-    ]
-  }
-];
-
-export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogout }) {
+export default function DashboardPage({ 
+  user, 
+  isExamMode, 
+  activeExamLock, 
+  activeExamTiming, 
+  currentTime = new Date(), 
+  examLocks = [], 
+  onLogout 
+}) {
   // Navigation step state: 'semesters' | 'subjects' | 'subject_detail'
   const [currentStep, setCurrentStep] = useState('semesters');
   const [selectedSemester, setSelectedSemester] = useState(SEMESTERS_DATA[1]); // Default Sem 2
@@ -184,25 +88,169 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
   
   // Right sidebar chat state
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    {
-      sender: 'ai',
-      text: 'Hello Sahil! I am your Syllabus-Grounded Academic Tutor. Ask me any conceptual question or derivation from your enrolled courses.',
-      time: 'Just now',
-      citations: ['Syllabus Ref: Semester 2 Units']
-    }
-  ]);
+  const messagesEndRef = useRef(null);
+  const [copiedMsgIdx, setCopiedMsgIdx] = useState(null);
+  const [studentNote, setStudentNote] = useState('');
+  const [msgFeedback, setMsgFeedback] = useState({});
+
+  // Chat History Storage in Database / localStorage
+  const [chatMessages, setChatMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem('aisa_chat_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      {
+        sender: 'ai',
+        text: 'Hello! I am your Syllabus-Grounded Academic AI Tutor. Ask me any conceptual question, equation derivation, or code problem from your enrolled course.',
+        time: 'Just now',
+        citations: ['Syllabus Ref: Semester 2 Units']
+      }
+    ];
+  });
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [activeChatTab, setActiveChatTab] = useState('course'); // 'course' | 'global'
+  const [, setActiveChatTab] = useState('course'); // 'course' | 'global'
+
+  // Persist chat history to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('aisa_chat_history', JSON.stringify(chatMessages));
+    } catch (e) {}
+  }, [chatMessages]);
+
+  // Auto-scroll to bottom on new message
+  useEffect(() => {
+    if (isChatOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isTyping, isChatOpen]);
 
   // Flag modal state
   const [flagModalOpen, setFlagModalOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('Citation Verification Needed');
   const [flaggedSuccess, setFlaggedSuccess] = useState(false);
 
+  // Gemini API Key Settings Modal
+  const [keyModalOpen, setKeyModalOpen] = useState(false);
+  const [keyInput, setKeyInput] = useState(getGeminiApiKey());
+  const [keySaveToast, setKeySaveToast] = useState(false);
+
+  // Resource Download Toast
+  const [downloadToast, setDownloadToast] = useState(null);
+
+  // Locked Semester Modal when student attempts to open locked semester
+  const [lockedSemesterModal, setLockedSemesterModal] = useState(null);
+
+  // Sprint 4: Faculty AI Notes & Email Notifications State
+  const [broadcastNotes, setBroadcastNotes] = useState(() => getSavedBroadcastNotes());
+  const [readNoteIds, setReadNoteIds] = useState(() => getStudentReadNotes(user?.email));
+  const [selectedNoteModal, setSelectedNoteModal] = useState(null);
+  const [noteModalTab, setNoteModalTab] = useState('guide'); // 'guide' | 'email'
+  const [notesToast, setNotesToast] = useState(null);
+  const [noteAccordionOpen, setNoteAccordionOpen] = useState(0);
+
+  // Sync broadcast notes across tabs/windows
+  useEffect(() => {
+    const handleNotesBroadcasted = (e) => {
+      const notes = e?.detail || getSavedBroadcastNotes();
+      setBroadcastNotes(notes);
+      if (notes.length > 0) {
+        setNotesToast(`🔔 New Faculty Study Guide: "${notes[0].title}" published by ${notes[0].teacherName}!`);
+        setTimeout(() => setNotesToast(null), 7000);
+      }
+    };
+
+    window.addEventListener('aisa_notes_broadcasted', handleNotesBroadcasted);
+    window.addEventListener('storage', handleNotesBroadcasted);
+
+    return () => {
+      window.removeEventListener('aisa_notes_broadcasted', handleNotesBroadcasted);
+      window.removeEventListener('storage', handleNotesBroadcasted);
+    };
+  }, []);
+
+  const unreadNotesCount = useMemo(() => {
+    return broadcastNotes.filter(n => !readNoteIds.includes(n.id)).length;
+  }, [broadcastNotes, readNoteIds]);
+
+  const handleOpenNote = (note) => {
+    setSelectedNoteModal(note);
+    setCurrentStep('faculty_notes');
+    setNoteModalTab('guide');
+    markNoteAsReadByStudent(note.id, user?.email);
+    setReadNoteIds(prev => (prev.includes(note.id) ? prev : [...prev, note.id]));
+  };
+
+  const handleDownloadNoteAsText = (note) => {
+    if (!note) return;
+    const concepts = (note.keyConcepts || []).map((kc, i) => `${i + 1}. ${kc.title || kc.heading || 'Concept'}\n   ${kc.summary || ''}`).join('\n\n');
+    const formulas = (note.crucialFormulas || note.examFormulas || []).map((f, i) => `[${i + 1}] ${f}`).join('\n');
+    const qas = (note.highYieldExamQA || []).map((qa, i) => `Q${i + 1} (${qa.marks || '5 Marks'}): ${qa.question}\nAnswer: ${qa.answer}\nTip: ${qa.examTip || ''}`).join('\n\n');
+    const cheatsheet = (note.quickCheatSheet || []).map(cs => `• ${cs}`).join('\n');
+
+    const textContent = `=====================================================
+${note.title}
+Course: ${note.subjectName} (${note.subjectCode}) - ${note.semester}
+Faculty: ${note.teacherName} (${note.teacherDesignation})
+Date: ${note.date} (${note.timestamp})
+=====================================================
+
+1. MODULE OVERVIEW:
+${note.moduleOverview || ''}
+
+2. KEY CONCEPTS & DEFINITIONS:
+${concepts}
+
+3. EXAM FORMULAS & INVARIANTS:
+${formulas}
+
+4. HIGH-YIELD EXAM QUESTIONS & ANSWERS:
+${qas}
+
+5. 1-PAGE REVISION CHEAT SHEET:
+${cheatsheet}
+
+=====================================================
+Grounded in ITM University B.Tech CSE Curriculum
+=====================================================`;
+
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${note.subjectCode}_AI_Study_Guide.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setDownloadToast(`📥 Downloaded "${note.subjectCode}_AI_Study_Guide.txt"!`);
+    setTimeout(() => setDownloadToast(null), 4000);
+  };
+
+  // Ensure student stays on semesters overview when exam lock is active
+  useEffect(() => {
+    if (isExamMode && currentStep !== 'semesters') {
+      setCurrentStep('semesters');
+    }
+  }, [isExamMode, currentStep]);
+
   // Navigate to subjects list
   const handleSelectSemester = (sem) => {
+    if (isExamMode) {
+      setLockedSemesterModal(sem);
+      return;
+    }
+    if (sem.isLocked) {
+      setLockedSemesterModal({
+        name: sem.name,
+        code: sem.code,
+        reason: sem.lockedReason || 'This semester curriculum is currently locked for your cohort.',
+        isAcademicLock: true
+      });
+      return;
+    }
     setSelectedSemester(sem);
     setCurrentStep('subjects');
     setSearchQuery('');
@@ -211,12 +259,17 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
 
   // Navigate to subject detail
   const handleSelectSubject = (subj) => {
+    if (isExamMode) {
+      setDownloadToast(`🔒 Access Frozen: Course materials are locked during ${activeExamLock?.course || 'scheduled exam'}.`);
+      setTimeout(() => setDownloadToast(null), 3500);
+      return;
+    }
     setSelectedSubject(subj);
     setCurrentStep('subject_detail');
   };
 
-  // Quick prompt trigger to Chat Drawer (Clean text without raw markdown asterisks)
-  const handleAskAI = (promptText) => {
+  // Quick prompt trigger to Chat Drawer with live Gemini API
+  const handleAskAI = async (promptText) => {
     setIsChatOpen(true);
     if (!promptText) return;
 
@@ -226,29 +279,44 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
     setChatMessages((prev) => [...prev, newMsg]);
     setIsTyping(true);
 
-    setTimeout(() => {
-      setIsTyping(false);
-      
-      let cleanResponse = `Here is the structured explanation for "${promptText}":\n\n1. Core Principle: In ${selectedSubject?.name || 'Computer Science'}, this topic forms the foundation of syllabus Unit 3.\n\n2. Textbook Derivation: Concepts are broken down step-by-step to build conceptual clarity without direct homework copying.\n\n3. Key Reference: Check chapter 4 in your university reference textbook for the complete mathematical proof.`;
+    const activeCourseName = (currentStep === 'faculty_notes' && selectedNoteModal?.subjectName) || selectedSubject?.name || 'DBMS - SQL';
+    const activeCourseCode = (currentStep === 'faculty_notes' && selectedNoteModal?.subjectCode) || selectedSubject?.code || 'CS204';
+    const activeSemName = (currentStep === 'faculty_notes' && selectedNoteModal?.semester) || selectedSemester?.name || 'Semester 2';
 
-      if (promptText.toLowerCase().includes('3nf') || promptText.toLowerCase().includes('bcnf')) {
-        cleanResponse = `Here is the Socratic explanation for 3NF vs BCNF:\n\n1. Third Normal Form (3NF):\nEvery functional dependency X -> Y must satisfy: X is a Super Key, or Y is a Prime Attribute.\n\n2. Boyce-Codd Normal Form (BCNF):\nEvery functional dependency X -> Y requires X to be a Super Key (no prime attribute exception).\n\n3. Key Insight: BCNF eliminates all redundancy based on functional dependencies, while 3NF preserves dependencies.`;
-      } else if (promptText.toLowerCase().includes('b+ tree') || promptText.toLowerCase().includes('tree')) {
-        cleanResponse = `Here is the explanation for B+ Tree Indexing:\n\n1. Data Pointers:\nIn B+ Trees, all actual data pointers reside solely in leaf nodes, while internal nodes only store search keys.\n\n2. Range Queries:\nLeaf nodes are linked together as a doubly linked list, making range scans very fast and efficient.\n\n3. Disk Performance:\nSmaller internal keys allow higher fanout per disk block, resulting in fewer I/O operations.`;
-      } else if (promptText.toLowerCase().includes('acid') || promptText.toLowerCase().includes('2pl')) {
-        cleanResponse = `Here is the explanation for ACID & 2PL Concurrency:\n\n1. Atomicity: All operations complete or none do, managed through Write-Ahead Logging (WAL).\n\n2. Consistency: Database transitions between valid states conforming to integrity constraints.\n\n3. Isolation & 2PL: Two-Phase Locking ensures transactions acquire all locks before releasing any, guaranteeing serializability.\n\n4. Durability: Committed updates persist permanently across crashes.`;
-      }
+    try {
+      const response = await generateSocraticResponse({
+        prompt: promptText,
+        courseContext: {
+          subjectName: activeCourseName,
+          subjectCode: activeCourseCode,
+          semesterName: activeSemName
+        },
+        history: chatMessages.map(m => ({ sender: m.sender, text: m.text }))
+      });
 
       setChatMessages((prev) => [
         ...prev,
         {
           sender: 'ai',
-          text: cleanResponse,
+          text: response.text,
           time: 'Just now',
-          citations: [`Course Ref: ${selectedSubject?.code || 'CS204'} · Syllabus Unit 3`]
+          citations: response.citations
         }
       ]);
-    }, 850);
+    } catch (err) {
+      console.error('Gemini call error in drawer:', err);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: '⚠️ Unable to connect to Gemini API right now. Please verify your internet connection or check your Gemini Key settings.',
+          time: 'Just now',
+          citations: ['Network Warning']
+        }
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSendMessage = (e) => {
@@ -299,6 +367,24 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
             </button>
 
             <button
+              onClick={() => {
+                if (broadcastNotes.length > 0 && !selectedNoteModal) {
+                  setSelectedNoteModal(broadcastNotes[0]);
+                }
+                setCurrentStep('faculty_notes');
+              }}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
+                currentStep === 'faculty_notes' ? 'bg-[#ED7D31] text-white shadow-md' : 'text-gray-400 hover:text-white hover:bg-white/10'
+              }`}
+              title="Faculty AI Study Notes & Repository"
+            >
+              <BookOpen className="w-5 h-5" />
+              {unreadNotesCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-[#ED7D31] absolute top-2 right-2 ring-2 ring-[#161B22]" />
+              )}
+            </button>
+
+            <button
               onClick={() => setIsChatOpen(!isChatOpen)}
               className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
                 isChatOpen ? 'bg-[#ED7D31] text-white' : 'text-gray-400 hover:text-white hover:bg-white/10'
@@ -317,6 +403,14 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
               title={isExamMode ? 'Exam Lock Active' : 'Simulate Exam Mode'}
             >
               {isExamMode ? <ShieldAlert className="w-5 h-5 animate-pulse text-red-400" /> : <ShieldCheck className="w-5 h-5" />}
+            </button>
+
+            <button
+              onClick={() => setKeyModalOpen(true)}
+              className="w-10 h-10 rounded-xl text-gray-400 hover:text-amber-400 hover:bg-white/10 flex items-center justify-center transition-all cursor-pointer"
+              title="Gemini API Key Settings"
+            >
+              <Key className="w-5 h-5" />
             </button>
           </nav>
         </div>
@@ -342,10 +436,57 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
 
       {/* ================= 2. MAIN CENTER CONTENT AREA ================= */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
-        
-        {/* Top App Header Bar */}
-        <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-borderLight px-6 py-3.5 flex items-center justify-between gap-4">
-          
+        {currentStep === 'faculty_notes' ? (
+          <StudentNotesHub
+            user={user}
+            notes={broadcastNotes}
+            selectedNoteId={selectedNoteModal?.id || broadcastNotes[0]?.id}
+            onSelectNote={(note) => {
+              setSelectedNoteModal(note);
+              markNoteAsReadByStudent(note.id, user?.email);
+              setReadNoteIds(prev => (prev.includes(note.id) ? prev : [...prev, note.id]));
+            }}
+            onBackToCourses={() => setCurrentStep('semesters')}
+            onOpenAiTutor={(prompt) => {
+              if (prompt) {
+                handleAskAI(prompt);
+              } else {
+                setIsChatOpen(true);
+              }
+            }}
+            onDownloadText={handleDownloadNoteAsText}
+          />
+        ) : (
+          <>
+            {/* Top App Header Bar */}
+            <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-borderLight px-6 py-3.5 flex items-center justify-between gap-4">
+              
+              {/* Download Notification Toast */}
+          {downloadToast && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-[#161B22] text-white px-4 py-2.5 rounded-2xl text-xs shadow-xl border border-amber-500/30 flex items-center gap-2 font-medium animate-bounce">
+              <Download className="w-4 h-4 text-[#ED7D31]" />
+              <span>{downloadToast}</span>
+            </div>
+          )}
+
+          {/* New Faculty Notes Broadcast Toast */}
+          {notesToast && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-r from-amber-600 to-[#ED7D31] text-white px-5 py-3 rounded-2xl text-xs shadow-2xl border border-amber-300 flex items-center gap-3 font-semibold animate-bounce max-w-xl">
+              <Sparkles className="w-4 h-4 flex-shrink-0 animate-spin" />
+              <span className="truncate">{notesToast}</span>
+              <button
+                onClick={() => {
+                  if (broadcastNotes.length > 0) handleOpenNote(broadcastNotes[0]);
+                  setNotesToast(null);
+                }}
+                className="px-3 py-1 bg-white text-[#ED7D31] rounded-xl text-[11px] font-black hover:bg-amber-50 cursor-pointer flex-shrink-0 shadow-sm"
+              >
+                Open Guide
+              </button>
+              <button onClick={() => setNotesToast(null)} className="text-white/80 hover:text-white p-1 cursor-pointer">✕</button>
+            </div>
+          )}
+
           {/* Breadcrumbs Navigation */}
           <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-charcoal truncate">
             <button
@@ -390,50 +531,131 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
             )}
           </div>
 
-          {/* Right Controls: Exam Mode Simulation Switch & Chat Toggle */}
+          {/* Right Controls: Dynamic Exam Lock Status & Chat Toggle */}
           <div className="flex items-center gap-3">
-            {/* Exam Simulation Status Badge / Switch */}
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-2xl border text-xs font-semibold transition-all ${
-              isExamMode 
-                ? 'bg-red-50 border-red-200 text-alertSoft' 
-                : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            }`}>
-              <span className="w-2 h-2 rounded-full animate-pulse bg-current" />
-              <span className="hidden md:inline font-bold">
-                {isExamMode ? 'Exam Lockout' : 'AI Active'}
-              </span>
-              <button
-                onClick={() => setIsExamMode(!isExamMode)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ml-1 focus:outline-none ${
-                  isExamMode ? 'bg-alertSoft' : 'bg-emerald-500'
-                }`}
-                title="Toggle Exam Mode Simulation"
+            {/* Faculty AI Notes Button */}
+            <button
+              onClick={() => {
+                if (broadcastNotes.length > 0) {
+                  handleOpenNote(broadcastNotes[0]);
+                }
+              }}
+              className="relative px-3 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200/80 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-xs"
+              title="View AI Study Guides & University Email Notifications"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-[#ED7D31]" />
+              <span className="hidden md:inline">Faculty Notes</span>
+              {unreadNotesCount > 0 ? (
+                <span className="px-1.5 py-0.5 rounded-full bg-[#ED7D31] text-white text-[10px] font-black animate-pulse">
+                  {unreadNotesCount} New
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
+                  {broadcastNotes.length}
+                </span>
+              )}
+            </button>
+
+            {/* Exam Lockout Status Badge */}
+            {isExamMode ? (
+              <div 
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shadow-xs animate-pulse"
+                title={`Exam Lock Active for ${activeExamLock?.course || 'Course'}. Unlocks in ${activeExamTiming?.timeRemainingStr || ''}`}
               >
-                <span
-                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform duration-200 shadow-sm ${
-                    isExamMode ? 'translate-x-4' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
+                <span className="hidden md:inline">Exam Lock Active</span>
+                {activeExamTiming?.timeRemainingStr && (
+                  <span className="bg-rose-200/80 text-rose-900 px-2 py-0.5 rounded-md font-mono text-[10px]">
+                    {activeExamTiming.timeRemainingStr}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span className="hidden md:inline font-bold">AI Active</span>
+              </div>
+            )}
 
             {/* Toggle AI Tutor Drawer Button */}
             <button
-              onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer shadow-xs ${
-                isChatOpen
-                  ? 'bg-[#ED7D31] text-white border-[#ED7D31]'
-                  : 'bg-white hover:bg-stone-50 text-charcoal border-borderLight'
+              onClick={() => {
+                if (isExamMode) {
+                  setDownloadToast(`🔒 AI Tutor Locked: Queries are suppressed during active exam.`);
+                  setTimeout(() => setDownloadToast(null), 3500);
+                  return;
+                }
+                setIsChatOpen(!isChatOpen);
+              }}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all shadow-xs ${
+                isExamMode
+                  ? 'bg-rose-50/70 text-rose-700 border-rose-200 cursor-not-allowed'
+                  : isChatOpen
+                  ? 'bg-[#ED7D31] text-white border-[#ED7D31] cursor-pointer'
+                  : 'bg-white hover:bg-stone-50 text-charcoal border-borderLight cursor-pointer'
               }`}
+              title={isExamMode ? 'AI Tutor Locked during examination' : 'Toggle AI Tutor'}
             >
               <Bot className="w-4 h-4 text-current" />
               <span className="hidden sm:inline">AI Tutor</span>
+              {isExamMode && <Lock className="w-3 h-3 text-rose-600" />}
             </button>
           </div>
         </header>
 
         {/* Dynamic Main Workspace Container */}
         <main className="p-6 sm:p-8 lg:p-10 max-w-6xl w-full mx-auto space-y-6">
+          
+          {/* Prominent Active Exam Lockdown Banner (30-min buffer active) */}
+          {isExamMode && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-rose-50 via-amber-50 to-orange-50 border-2 border-rose-200/90 shadow-md space-y-3.5 text-left"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                    <ShieldAlert className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md bg-rose-600 text-white font-mono text-[10px] font-black uppercase tracking-wider">
+                        Honor Code Lockdown Active
+                      </span>
+                      <span className="text-xs font-bold text-rose-800">
+                        {activeExamTiming?.reason || '30-Minute Integrity Buffer in Progress'}
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 mt-1">
+                      {activeExamLock?.course || 'Course Examination Lockdown'}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 bg-white/95 px-4 py-2.5 rounded-2xl border border-rose-200 shadow-xs self-start sm:self-center flex-shrink-0">
+                  <Timer className="w-5 h-5 text-rose-600 animate-spin [animation-duration:8s]" />
+                  <div className="text-left">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Portal Unlocks In</span>
+                    <strong className="text-rose-700 font-mono text-sm font-black">
+                      {activeExamTiming?.timeRemainingStr || '00:00'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 text-xs border-t border-rose-200/70 text-slate-700">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[#ED7D31] flex-shrink-0" />
+                  <span>Exam Window: <strong>{activeExamLock?.date} · {activeExamLock?.startTime ? formatTime12Hr(activeExamLock.startTime) : ''} – {activeExamLock?.endTime ? formatTime12Hr(activeExamLock.endTime) : ''}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                  <span>Integrity Buffer: <strong>Auto-locked 30m prior & releases 30m after completion</strong></span>
+                </div>
+              </div>
+            </motion.div>
+          )}
           
           {/* ================= STEP 1: ALL SEMESTERS (LMS Grid) ================= */}
           {currentStep === 'semesters' && (
@@ -465,14 +687,44 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
                   <div
                     key={sem.id}
                     onClick={() => handleSelectSemester(sem)}
-                    className="group bg-white rounded-3xl p-6 border border-[#E8E5DD] shadow-sm hover:shadow-xl hover:border-[#ED7D31] transition-all duration-300 flex flex-col justify-between cursor-pointer relative overflow-hidden"
+                    className={`group bg-white rounded-3xl p-6 border transition-all duration-300 flex flex-col justify-between relative overflow-hidden cursor-pointer ${
+                      isExamMode 
+                        ? 'border-rose-200 shadow-xs bg-slate-50/70 select-none hover:border-rose-400 hover:shadow-md' 
+                        : sem.isLocked
+                        ? 'border-slate-300 shadow-xs bg-slate-50/75 hover:border-slate-400 hover:shadow-md'
+                        : 'border-[#E8E5DD] shadow-sm hover:shadow-xl hover:border-[#ED7D31]'
+                    }`}
                   >
                     {/* Top Accent Band */}
-                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#ED7D31] to-amber-400 opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className={`absolute top-0 left-0 right-0 h-1.5 transition-opacity ${
+                      isExamMode 
+                        ? 'bg-rose-500 opacity-90' 
+                        : sem.isLocked
+                        ? 'bg-slate-400 opacity-70 group-hover:opacity-100'
+                        : 'bg-gradient-to-r from-[#ED7D31] to-amber-400 opacity-80 group-hover:opacity-100'
+                    }`} />
+
+                    {isExamMode ? (
+                      <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5 px-2.5 py-1 bg-rose-100 text-rose-800 rounded-xl text-[10px] font-black uppercase tracking-wider border border-rose-200 shadow-2xs">
+                        <Lock className="w-3 h-3 text-rose-600" />
+                        <span>Locked</span>
+                      </div>
+                    ) : sem.isLocked ? (
+                      <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5 px-2.5 py-1 bg-slate-200 text-slate-700 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-300 shadow-2xs">
+                        <Lock className="w-3 h-3 text-slate-600" />
+                        <span>Locked</span>
+                      </div>
+                    ) : null}
 
                     <div>
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-xs font-mono font-bold text-[#ED7D31] bg-[#ED7D31]/10 px-2.5 py-1 rounded-full border border-[#ED7D31]/20">
+                        <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full border ${
+                          isExamMode 
+                            ? 'text-rose-700 bg-rose-50 border-rose-200' 
+                            : sem.isLocked
+                            ? 'text-slate-600 bg-slate-100 border-slate-200'
+                            : 'text-[#ED7D31] bg-[#ED7D31]/10 border-[#ED7D31]/20'
+                        }`}>
                           {sem.code}
                         </span>
                         <span className="text-xs text-charcoal-muted font-semibold bg-stone-100 px-2.5 py-0.5 rounded-lg">
@@ -480,8 +732,15 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
                         </span>
                       </div>
 
-                      <h3 className="font-sans text-xl font-extrabold text-charcoal group-hover:text-[#ED7D31] transition-colors mb-2">
-                        {sem.id}. {sem.name}
+                      <h3 className={`font-sans text-xl font-extrabold mb-2 transition-colors flex items-center justify-between ${
+                        isExamMode 
+                          ? 'text-slate-800 group-hover:text-rose-700' 
+                          : sem.isLocked
+                          ? 'text-slate-700 group-hover:text-slate-900'
+                          : 'text-charcoal group-hover:text-[#ED7D31]'
+                      }`}>
+                        <span>{sem.id}. {sem.name}</span>
+                        {sem.isLocked && <Lock className="w-4 h-4 text-slate-400" />}
                       </h3>
 
                       <p className="text-xs text-charcoal-muted leading-relaxed line-clamp-2 mb-6">
@@ -490,21 +749,49 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
                     </div>
 
                     {/* Progress Bar & CTA */}
-                    <div className="pt-4 border-t border-gray-100">
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <span className="text-charcoal-muted font-medium">Syllabus Completion</span>
-                        <span className="font-bold text-charcoal">{sem.progress}%</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden mb-4">
-                        <div 
-                          className="h-full bg-gradient-to-r from-[#ED7D31] to-amber-500 rounded-full transition-all duration-500"
-                          style={{ width: `${Math.max(sem.progress, 6)}%` }}
-                        />
+                    <div className="pt-4 border-t border-gray-100 space-y-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-charcoal-muted font-medium">Syllabus Completion</span>
+                          <span className="font-bold text-charcoal">{sem.progress}%</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isExamMode || sem.isLocked ? 'bg-slate-300' : 'bg-gradient-to-r from-[#ED7D31] to-amber-500'
+                            }`}
+                            style={{ width: `${Math.max(sem.progress, sem.isLocked ? 0 : 6)}%` }}
+                          />
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs font-bold text-[#ED7D31] group-hover:translate-x-1 transition-transform">
-                        <span>Open Semester Subjects</span>
-                        <ArrowRight className="w-4 h-4" />
+                      <div className="pt-1">
+                        {isExamMode ? (
+                          <div className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shadow-2xs group-hover:bg-rose-100 transition-colors">
+                            <span className="flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Access Locked (Exam Active)</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-semibold text-rose-800 bg-rose-200/80 px-2 py-0.5 rounded-md">
+                              {activeExamTiming?.timeRemainingStr || 'Locked'}
+                            </span>
+                          </div>
+                        ) : sem.isLocked ? (
+                          <div className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold shadow-2xs group-hover:bg-slate-200/70 group-hover:text-slate-800 transition-colors">
+                            <span className="flex items-center gap-1.5">
+                              <Lock className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Upcoming Term (Locked)</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-md">
+                              Year 4
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between text-xs font-bold text-[#ED7D31] group-hover:translate-x-1 transition-transform">
+                            <span>Open Semester Subjects</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -659,6 +946,82 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
                 </div>
               </div>
 
+              {/* Approved Academic Resources & Downloads Hub */}
+              <div className="bg-white rounded-3xl p-6 border border-[#E8E5DD] shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 text-[#ED7D31] flex items-center justify-center">
+                      <BookCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="font-sans text-base font-bold text-charcoal">
+                        Approved Textbook References & Lecture Notes
+                      </h3>
+                      <p className="text-xs text-charcoal-muted">Faculty-reviewed curriculum resources for {selectedSubject.name}</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    ✓ Verified Academic Sources
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  <div className="p-4 rounded-2xl bg-stone-50 border border-borderLight flex flex-col justify-between space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-bold text-charcoal">
+                        <FileText className="w-4 h-4 text-[#ED7D31]" />
+                        <span>Official Course Lecture Slides</span>
+                      </div>
+                      <p className="text-[11px] text-charcoal-muted">Complete 5-unit slide deck provided by department faculty.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setDownloadToast(`Downloading ${selectedSubject.code}_Lecture_Slides.pdf`);
+                        setTimeout(() => setDownloadToast(null), 3000);
+                      }}
+                      className="w-full py-2 bg-white hover:bg-amber-50 text-charcoal font-bold text-xs rounded-xl border border-borderLight transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-[#ED7D31]" />
+                      <span>Download PDF Notes</span>
+                    </button>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-stone-50 border border-borderLight flex flex-col justify-between space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-bold text-charcoal">
+                        <BookOpen className="w-4 h-4 text-[#ED7D31]" />
+                        <span>Standard Reference Textbook</span>
+                      </div>
+                      <p className="text-[11px] text-charcoal-muted">Database System Concepts (Silberschatz, Korth, Sudarshan 7th Ed).</p>
+                    </div>
+                    <button
+                      onClick={() => handleAskAI(`What chapters in Database System Concepts cover ${selectedSubject.name}?`)}
+                      className="w-full py-2 bg-white hover:bg-amber-50 text-charcoal font-bold text-xs rounded-xl border border-borderLight transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-[#ED7D31]" />
+                      <span>View Chapter Maps</span>
+                    </button>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-stone-50 border border-borderLight flex flex-col justify-between space-y-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-xs font-bold text-charcoal">
+                        <BrainCircuit className="w-4 h-4 text-[#ED7D31]" />
+                        <span>Socratic Exam Practice Bank</span>
+                      </div>
+                      <p className="text-[11px] text-charcoal-muted">Interactive flashcards & previous semester viva questions.</p>
+                    </div>
+                    <button
+                      onClick={() => handleAskAI(`Generate 3 high-yield Socratic practice exam questions for ${selectedSubject.name}`)}
+                      className="w-full py-2 bg-white hover:bg-amber-50 text-charcoal font-bold text-xs rounded-xl border border-borderLight transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Award className="w-3.5 h-3.5 text-[#ED7D31]" />
+                      <span>Generate Quiz Bank</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* 5 Units Curriculum Grid */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -715,6 +1078,8 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
           )}
 
         </main>
+          </>
+        )}
       </div>
 
       {/* ================= 3. RIGHT AI SOCRATIC CHAT PANEL (LMS Drawer) ================= */}
@@ -763,22 +1128,54 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
 
             {/* Exam Locked Notice if exam is active */}
             {isExamMode ? (
-              <div className="flex-1 p-6 flex flex-col items-center justify-center text-center bg-red-50/50 space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-red-100 text-alertSoft flex items-center justify-center">
-                  <ShieldAlert className="w-6 h-6 animate-pulse" />
+              <div className="flex-1 p-6 flex flex-col items-center justify-center text-center bg-rose-50/60 space-y-4">
+                <div className="w-14 h-14 rounded-3xl bg-rose-100 text-rose-600 flex items-center justify-center shadow-sm">
+                  <ShieldAlert className="w-7 h-7 animate-pulse" />
                 </div>
-                <h4 className="font-serif font-bold text-base text-alertSoft">
-                  AI Assistance Locked
-                </h4>
-                <p className="text-xs text-charcoal-muted leading-relaxed max-w-xs">
-                  A scheduled exam window is currently simulated. Direct querying and answers are locked to enforce institutional honor codes.
-                </p>
-                <button
-                  onClick={() => setIsExamMode(false)}
-                  className="text-xs font-bold text-[#ED7D31] hover:underline cursor-pointer"
-                >
-                  Turn off simulation to test chat
-                </button>
+
+                <div className="space-y-1">
+                  <span className="px-2.5 py-0.5 rounded-md bg-rose-200 text-rose-900 text-[10px] font-mono font-black uppercase tracking-wider">
+                    Honor Code Lockdown
+                  </span>
+                  <h4 className="font-sans font-extrabold text-base text-slate-900">
+                    AI Queries Suppressed
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                    Automated academic restriction active for course examination integrity.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-white border border-rose-200 text-left space-y-2 w-full text-xs shadow-xs">
+                  <div className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">
+                    Active Examination:
+                  </div>
+                  <p className="font-extrabold text-slate-900 text-xs">
+                    {activeExamLock?.course || 'Examination Session'}
+                  </p>
+                  <div className="text-[11px] text-slate-600 space-y-1 pt-1 border-t border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Exam Slot:</span>
+                      <strong className="font-mono text-slate-800">
+                        {activeExamLock?.startTime ? formatTime12Hr(activeExamLock.startTime) : ''} – {activeExamLock?.endTime ? formatTime12Hr(activeExamLock.endTime) : ''}
+                      </strong>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Current Stage:</span>
+                      <span className="text-[#D96618] font-bold">
+                        {activeExamTiming?.reason || 'Lock in progress'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Buffer Rule:</span>
+                      <span className="text-slate-700 font-medium">±30m Pre & Post Lock</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="w-full p-3 bg-white rounded-2xl border border-rose-200 shadow-2xs flex items-center justify-center gap-2 text-rose-700 text-xs font-bold font-mono">
+                  <Timer className="w-4 h-4 text-rose-600 animate-spin [animation-duration:8s]" />
+                  <span>Unlocks in: {activeExamTiming?.timeRemainingStr || 'Locked'}</span>
+                </div>
               </div>
             ) : (
               /* Chat Messages Feed */
@@ -786,22 +1183,101 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
                 {chatMessages.map((msg, i) => (
                   <div
                     key={i}
-                    className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+                    className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'} group`}
                   >
+                    {/* Verified Faculty Answer Badge */}
+                    {msg.sender === 'faculty' && (
+                      <div className="mb-1 flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 font-bold">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Verified Faculty Answer</span>
+                      </div>
+                    )}
+
                     <div
-                      className={`p-3.5 rounded-2xl max-w-[88%] leading-relaxed text-left whitespace-pre-line shadow-xs ${
+                      className={`p-3.5 rounded-2xl max-w-[88%] leading-relaxed text-left shadow-xs ${
                         msg.sender === 'user'
                           ? 'bg-[#ED7D31] text-white rounded-br-sm'
-                          : 'bg-stone-100 text-charcoal border border-borderLight rounded-bl-sm'
+                          : msg.sender === 'faculty'
+                          ? 'bg-emerald-50 text-emerald-950 border border-emerald-200 rounded-bl-sm font-medium'
+                          : 'bg-stone-50 text-charcoal border border-borderLight rounded-bl-sm'
                       }`}
                     >
-                      {msg.text}
+                      <FormattedChatMessage
+                        content={msg.text}
+                        isUser={msg.sender === 'user'}
+                      />
                     </div>
 
                     {msg.citations && (
                       <div className="mt-1 flex items-center gap-1 text-[10px] text-[#ED7D31] font-semibold">
                         <CheckCircle2 className="w-3 h-3 text-successSoft" />
                         <span>{msg.citations[0]}</span>
+                      </div>
+                    )}
+
+                    {/* AI Message Action Buttons: Thumbs Up/Down, Copy Code, Ask Teacher */}
+                    {msg.sender === 'ai' && (
+                      <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-400">
+                        {/* Thumbs Up */}
+                        <button
+                          onClick={() => setMsgFeedback(prev => ({ ...prev, [i]: 'up' }))}
+                          className={`p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer ${
+                            msgFeedback[i] === 'up' ? 'text-emerald-600 font-bold' : 'hover:text-slate-700'
+                          }`}
+                          title="Accurate & helpful"
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                        </button>
+
+                        {/* Thumbs Down (AI Hallucination Reporting) */}
+                        <button
+                          onClick={() => {
+                            setMsgFeedback(prev => ({ ...prev, [i]: 'down' }));
+                            setFlagReason('Hallucinated Reference');
+                            setStudentNote(`Reported hallucination in response: "${msg.text.slice(0, 60)}..."`);
+                            setFlagModalOpen(true);
+                          }}
+                          className={`p-1 rounded-md hover:bg-slate-100 transition-colors cursor-pointer ${
+                            msgFeedback[i] === 'down' ? 'text-rose-600 font-bold' : 'hover:text-slate-700'
+                          }`}
+                          title="Report Hallucination"
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                        </button>
+
+                        {/* One-click Copy Code / Text */}
+                        <button
+                          onClick={() => {
+                            navigator.clipboard?.writeText(msg.text);
+                            setCopiedMsgIdx(i);
+                            setTimeout(() => setCopiedMsgIdx(null), 2000);
+                          }}
+                          className="p-1 rounded-md hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer flex items-center gap-1 text-[10px]"
+                          title="Copy text / code block"
+                        >
+                          {copiedMsgIdx === i ? (
+                            <>
+                              <CheckCheck className="w-3 h-3 text-emerald-600" />
+                              <span className="text-[9px] text-emerald-600 font-bold">Copied!</span>
+                            </>
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+
+                        {/* Ask Teacher / Escalate Doubt */}
+                        <button
+                          onClick={() => {
+                            setFlagReason('Citation Verification Needed');
+                            setStudentNote(`Student doubt regarding: "${msg.text.slice(0, 60)}..."`);
+                            setFlagModalOpen(true);
+                          }}
+                          className="px-2 py-0.5 rounded-md hover:bg-amber-50 hover:text-amber-700 text-slate-500 font-semibold text-[10px] flex items-center gap-1 transition-colors cursor-pointer ml-0.5"
+                          title="Ask Faculty / Escalate doubt"
+                        >
+                          <Flag className="w-2.5 h-2.5 text-amber-500" />
+                          <span>Ask Teacher</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -814,6 +1290,9 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
                     <span className="w-2 h-2 rounded-full bg-gray-400 animate-bounce [animation-delay:0.4s]" />
                   </div>
                 )}
+
+                {/* Auto-scroll target */}
+                <div ref={messagesEndRef} />
               </div>
             )}
 
@@ -896,36 +1375,268 @@ export default function DashboardPage({ user, isExamMode, setIsExamMode, onLogou
               </div>
             ) : (
               <>
-                <h3 className="font-sans font-bold text-lg text-charcoal">
-                  Responsible AI Audit Flag
+                <h3 className="font-sans font-extrabold text-lg text-charcoal">
+                  Escalate Doubt & Report to Faculty
                 </h3>
                 <p className="text-xs text-charcoal-muted leading-relaxed">
-                  Flag an inaccurate response or textbook ambiguity for faculty review.
+                  Send this doubt or AI response flag directly to your course instructor's review queue.
                 </p>
 
-                <select
-                  value={flagReason}
-                  onChange={(e) => setFlagReason(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-borderLight text-xs bg-stone-50 text-charcoal font-medium"
-                >
-                  <option>Citation Verification Needed</option>
-                  <option>Ambiguous Mathematical Proof</option>
-                  <option>Out of Syllabus Content</option>
-                  <option>Hallucinated Reference</option>
-                </select>
+                <div className="space-y-2 text-left">
+                  <label className="block text-[11px] font-bold text-slate-700">Reason Category:</label>
+                  <select
+                    value={flagReason}
+                    onChange={(e) => setFlagReason(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-borderLight text-xs bg-stone-50 text-charcoal font-medium"
+                  >
+                    <option>Citation Verification Needed</option>
+                    <option>Hallucinated Reference / Inaccurate Output</option>
+                    <option>Ambiguous Mathematical Proof</option>
+                    <option>Out of Syllabus Content</option>
+                    <option>Concept Clarification Doubt</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1 text-left">
+                  <label className="block text-[11px] font-bold text-slate-700">Student Doubt Note:</label>
+                  <textarea
+                    value={studentNote}
+                    onChange={(e) => setStudentNote(e.target.value)}
+                    placeholder="Write details for your faculty mentor..."
+                    rows={2}
+                    className="w-full p-2.5 rounded-xl border border-borderLight text-xs bg-stone-50 text-charcoal font-normal placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#ED7D31]"
+                  />
+                </div>
 
                 <div className="flex items-center gap-2 pt-2">
                   <button
-                    onClick={() => setFlagModalOpen(false)}
-                    className="w-1/2 py-2.5 rounded-xl border border-borderLight text-xs font-semibold text-charcoal hover:bg-stone-50"
+                    onClick={() => {
+                      setStudentNote('');
+                      setFlagModalOpen(false);
+                    }}
+                    className="w-1/2 py-2.5 rounded-xl border border-borderLight text-xs font-semibold text-charcoal hover:bg-stone-50 cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => setFlaggedSuccess(true)}
-                    className="gold-button w-1/2 py-2.5 rounded-xl text-xs font-bold"
+                    onClick={() => {
+                      setFlaggedSuccess(true);
+                      setStudentNote('');
+                    }}
+                    className="gold-button w-1/2 py-2.5 rounded-xl text-xs font-bold cursor-pointer"
                   >
-                    Submit Flag
+                    Escalate to Faculty
+                  </button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </div>
+      )}
+
+      {/* Gemini API Key Settings Modal */}
+      {keyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/50 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-3xl p-6 max-w-md w-full border border-borderLight shadow-2xl space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 text-[#ED7D31] flex items-center justify-center">
+                  <Key className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-sans font-bold text-base text-charcoal">
+                    Gemini AI Model Key
+                  </h3>
+                  <p className="text-[11px] text-charcoal-muted">Active Socratic Academic Engine</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setKeyModalOpen(false)}
+                className="p-1 rounded-lg text-gray-400 hover:text-charcoal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {keySaveToast && (
+              <div className="p-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-semibold flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Gemini API Key saved successfully!</span>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-charcoal">
+                Active API Key:
+              </label>
+              <input
+                type="password"
+                value={keyInput}
+                onChange={(e) => setKeyInput(e.target.value)}
+                placeholder="Enter Gemini API key..."
+                className="w-full px-3.5 py-2.5 bg-stone-50 border border-borderLight rounded-xl text-xs text-charcoal focus:outline-none focus:ring-2 focus:ring-[#ED7D31]"
+              />
+              <p className="text-[11px] text-charcoal-muted leading-relaxed">
+                Loaded from environment or local storage. You can reset or update this anytime.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => {
+                  const defaultKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+                  setKeyInput(defaultKey);
+                  setGeminiApiKey(defaultKey);
+                  setKeySaveToast(true);
+                  setTimeout(() => setKeySaveToast(false), 2000);
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-semibold text-charcoal-muted hover:text-charcoal bg-stone-100 transition-colors"
+              >
+                Reset Default Key
+              </button>
+              <button
+                onClick={() => {
+                  setGeminiApiKey(keyInput);
+                  setKeySaveToast(true);
+                  setTimeout(() => {
+                    setKeySaveToast(false);
+                    setKeyModalOpen(false);
+                  }, 1200);
+                }}
+                className="gold-button px-4 py-2 rounded-xl text-xs font-bold"
+              >
+                Save Key
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Locked Semester Access Modal */}
+      {lockedSemesterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={`bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border shadow-2xl space-y-4 text-left ${
+              lockedSemesterModal.isAcademicLock ? 'border-amber-200' : 'border-rose-200'
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-md flex-shrink-0 ${
+                  lockedSemesterModal.isAcademicLock 
+                    ? 'bg-amber-500 shadow-amber-500/30' 
+                    : 'bg-rose-500 shadow-rose-500/30'
+                }`}>
+                  {lockedSemesterModal.isAcademicLock ? (
+                    <Lock className="w-6 h-6" />
+                  ) : (
+                    <ShieldAlert className="w-6 h-6 animate-pulse" />
+                  )}
+                </div>
+                <div>
+                  <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-mono font-black uppercase tracking-wider ${
+                    lockedSemesterModal.isAcademicLock
+                      ? 'bg-amber-100 text-amber-900'
+                      : 'bg-rose-100 text-rose-800'
+                  }`}>
+                    {lockedSemesterModal.isAcademicLock ? 'Academic Cohort Restriction' : 'Honor Code Lockdown'}
+                  </span>
+                  <h3 className="font-sans font-extrabold text-lg text-slate-900 mt-0.5">
+                    {lockedSemesterModal.name} is Locked
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setLockedSemesterModal(null)}
+                className="p-1 rounded-lg text-gray-400 hover:text-charcoal cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {lockedSemesterModal.isAcademicLock ? (
+              <>
+                <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 space-y-1.5 text-xs">
+                  <p className="text-amber-950 font-bold leading-relaxed">
+                    {lockedSemesterModal.name} ({lockedSemesterModal.code}) is not yet available for enrollment.
+                  </p>
+                  <p className="text-amber-800 leading-relaxed text-[11px]">
+                    {lockedSemesterModal.reason || 'This advanced 4th-year semester curriculum is currently locked for your current cohort.'}
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Eligible Batch:</span>
+                    <strong className="text-slate-900 font-bold">4th Year (B.Tech 2027–2028)</strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Curriculum Status:</span>
+                    <span className="font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md text-[11px]">Upcoming Academic Year</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Active Terms Accessible:</span>
+                    <span className="text-emerald-700 font-bold">Semesters 1 to 6</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => setLockedSemesterModal(null)}
+                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-colors cursor-pointer"
+                  >
+                    Got It, Return to Overview
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="p-4 rounded-2xl bg-rose-50/80 border border-rose-200/90 space-y-1.5 text-xs">
+                  <p className="text-slate-800 font-bold leading-relaxed">
+                    You cannot open {lockedSemesterModal.name} ({lockedSemesterModal.code}) while the examination lockdown is active.
+                  </p>
+                  <p className="text-slate-600 leading-relaxed text-[11px]">
+                    To maintain institutional test integrity, all semester course materials, subject modules, and study tools are temporarily frozen.
+                  </p>
+                </div>
+
+                <div className="space-y-2 text-xs text-slate-700 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Exam in Progress:</span>
+                    <strong className="text-slate-900 font-bold">{activeExamLock?.course || 'CS204 - DBMS - SQL'}</strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Scheduled Window:</span>
+                    <span className="font-mono font-bold text-slate-800">
+                      {activeExamLock?.startTime ? formatTime12Hr(activeExamLock.startTime) : ''} – {activeExamLock?.endTime ? formatTime12Hr(activeExamLock.endTime) : ''}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Security Buffer:</span>
+                    <span className="text-rose-700 font-semibold">±30m Pre & Post Buffer Active</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-200">
+                    <span className="text-slate-500 font-medium">Portal Releases In:</span>
+                    <span className="font-mono font-black text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md text-xs">
+                      {activeExamTiming?.timeRemainingStr || 'Locked'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    onClick={() => setLockedSemesterModal(null)}
+                    className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-colors cursor-pointer"
+                  >
+                    Understood, Return to Overview
                   </button>
                 </div>
               </>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import FormattedChatMessage from './FormattedChatMessage';
 import { 
   X, 
   Send, 
@@ -15,8 +16,10 @@ import {
   Lightbulb,
   CornerDownLeft,
   Copy,
-  Check
+  Check,
+  Key
 } from 'lucide-react';
+import { generateSocraticResponse, getGeminiApiKey, setGeminiApiKey } from '../services/geminiService';
 
 export default function ChatAssistantModal({ isOpen, onClose, user, isExamMode }) {
   const [messages, setMessages] = useState([
@@ -35,6 +38,8 @@ export default function ChatAssistantModal({ isOpen, onClose, user, isExamMode }
   const [reportFeedback, setReportFeedback] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [customApiKey, setCustomApiKey] = useState(getGeminiApiKey());
 
   const messagesEndRef = useRef(null);
 
@@ -55,7 +60,7 @@ export default function ChatAssistantModal({ isOpen, onClose, user, isExamMode }
     'How do clustered indexes affect query latency?',
   ];
 
-  const handleSend = (textToSend) => {
+  const handleSend = async (textToSend) => {
     const query = typeof textToSend === 'string' ? textToSend : inputValue;
     if (!query.trim()) return;
 
@@ -76,32 +81,43 @@ export default function ChatAssistantModal({ isOpen, onClose, user, isExamMode }
     setInputValue('');
     setIsTyping(true);
 
-    // Generate context-aware academic response
-    setTimeout(() => {
-      let reply = '';
-      const lower = query.toLowerCase();
-
-      if (lower.includes('b+ tree') || lower.includes('b-tree') || lower.includes('tree')) {
-        reply = `B-Trees vs. B+ Trees in DBMS Indexing:\n\n1. Data Pointers:\n- B-Tree: Pointers to actual records exist in both internal nodes and leaf nodes.\n- B+ Tree: Internal nodes only store key values; all data pointers and records reside in the leaf nodes.\n\n2. Range Queries & Traversal:\n- B+ Tree: Leaf nodes are connected as a doubly linked list, making range scans very fast.\n- B-Tree: Requires in-order tree traversal.\n\n3. Storage Efficiency:\n- B+ Tree internal nodes are smaller, meaning higher fan-out per disk block and fewer disk I/O operations.`;
-      } else if (lower.includes('3nf') || lower.includes('bcnf') || lower.includes('normalization')) {
-        reply = `Third Normal Form (3NF) vs Boyce-Codd Normal Form (BCNF):\n\n1. 3NF Rule: For every functional dependency X -> Y, either X is a Super Key, OR Y is a Prime Attribute.\n\n2. BCNF Rule (Stricter): For every functional dependency X -> Y, X must be a Super Key.\n\n3. Key Insight: Every relation in BCNF is in 3NF, but not every 3NF relation satisfies BCNF.`;
-      } else if (lower.includes('acid') || lower.includes('transaction')) {
-        reply = `ACID Properties of Database Transactions:\n\n- Atomicity: All operations complete or none do ("All or Nothing"), managed via Write-Ahead Logging (WAL).\n- Consistency: Transactions transition database from one valid state to another.\n- Isolation: Concurrent transactions execute without mutual interference using 2PL locking.\n- Durability: Once committed, updates persist permanently even across system crashes.`;
-      } else {
-        reply = `Academic Breakdown: ${query}\n\nHere is a structured explanation based on standard course syllabus guidelines:\n\n1. Core Concept: In the context of ${user?.enrolledCourse || 'Computer Science'}, this topic focuses on system performance and state consistency.\n2. Theoretical Formulation: Key theorems emphasize optimal space/time complexity.\n3. Practical Application: Applied in production storage engines and query optimizers.\n\nReference: Database System Concepts (7th Edition).`;
-      }
+    try {
+      const response = await generateSocraticResponse({
+        prompt: query,
+        courseContext: {
+          subjectName: user?.enrolledCourse || 'Database Management Systems',
+          subjectCode: 'CS301',
+          semesterName: 'Semester 2'
+        },
+        history: messages
+      });
 
       const botMessage = {
         id: `bot-${Date.now()}`,
         sender: 'assistant',
-        text: reply,
+        text: response.text,
+        citations: response.citations,
+        isMock: response.isMock,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         flagged: false,
       };
 
       setMessages((prev) => [...prev, botMessage]);
+    } catch (err) {
+      console.error('Error generating AI response:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `bot-${Date.now()}`,
+          sender: 'assistant',
+          text: `⚠️ I encountered a temporary connection issue while querying the Gemini academic engine. Please verify your internet connection or check your Gemini API key in settings.`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          flagged: false,
+        }
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1100);
+    }
   };
 
   const handleFlagSubmit = () => {
@@ -209,9 +225,10 @@ export default function ChatAssistantModal({ isOpen, onClose, user, isExamMode }
                       : 'bg-wheat-50/80 text-charcoal border border-borderLight rounded-bl-none shadow-sm'
                   }`}
                 >
-                  <div className="whitespace-pre-wrap font-sans text-charcoal text-sm">
-                    {msg.text}
-                  </div>
+                  <FormattedChatMessage
+                    content={msg.text}
+                    isUser={msg.sender === 'user'}
+                  />
                 </div>
 
                 {/* Message Meta & Responsible AI Reporting Button */}
