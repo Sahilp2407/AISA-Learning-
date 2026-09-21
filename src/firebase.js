@@ -8,6 +8,7 @@ import {
   signOut, 
   onAuthStateChanged 
 } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBD5vOmwZ_ZzYNkhpVGDSnBljEYmL3lMvM",
@@ -22,9 +23,10 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication
+// Initialize Firebase Authentication & Firestore
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export const db = getFirestore(app);
 
 // Google Sign-In helper
 export const signInWithGoogle = async () => {

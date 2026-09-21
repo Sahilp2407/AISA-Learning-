@@ -54,11 +54,13 @@ import {
   File,
   Share2,
   Inbox,
-  Copy
+  Copy,
+  Database
 } from 'lucide-react';
 import { SEMESTERS_DATA } from '../data/curriculumData';
 import { STUDENTS_DATA, FACULTY_DATA } from '../data/studentsData';
 import { AI_AUDIT_DATA } from '../data/aiAuditData';
+import { syncCurriculumToFirestore, fetchAllSubmissions } from '../services/assessmentService';
 import { 
   generateAIStudyNotes, 
   publishNewBroadcastNote, 
@@ -170,6 +172,39 @@ export default function AdminDashboardPage({
   const activeLockSummary = useMemo(() => {
     return getActiveExamLockSummary(examLocks, currentTime);
   }, [examLocks, currentTime]);
+
+  // Firestore Cloud Quiz & Course Sync State
+  const [allQuizSubmissions, setAllQuizSubmissions] = useState([]);
+  const [syncingCourses, setSyncingCourses] = useState(false);
+  const [syncCoursesResult, setSyncCoursesResult] = useState(null);
+
+  // Load all quiz submissions from Firestore on mount
+  React.useEffect(() => {
+    let isMounted = true;
+    fetchAllSubmissions()
+      .then(subs => {
+        if (isMounted) setAllQuizSubmissions(subs);
+      })
+      .catch(err => console.warn('Failed to fetch all quiz submissions:', err));
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleSyncCoursesToFirestore = async () => {
+    setSyncingCourses(true);
+    try {
+      const res = await syncCurriculumToFirestore();
+      if (res.success) {
+        setSyncCoursesResult(`✅ Successfully synced ${res.totalSynced} Courses & Modules to Firestore collection 'courses'!`);
+      } else {
+        setSyncCoursesResult('⚠️ Firestore sync completed with some errors.');
+      }
+    } catch (e) {
+      setSyncCoursesResult('⚠️ Firestore sync failed: ' + e.message);
+    } finally {
+      setSyncingCourses(false);
+      setTimeout(() => setSyncCoursesResult(null), 6000);
+    }
+  };
 
   // Sprint 4 (FR-ADMIN): User Management Sub-Tab ('students' | 'faculty')
   const [userDirectorySubTab, setUserDirectorySubTab] = useState('students');
@@ -2125,10 +2160,29 @@ export default function AdminDashboardPage({
                     Browse all 8 Semesters, audit syllabus grounding rules, and enforce exam locks per course.
                   </p>
                 </div>
-                <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 self-start sm:self-center">
-                  ✓ Synchronized with Student Portal
-                </span>
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-center">
+                  <button
+                    type="button"
+                    disabled={syncingCourses}
+                    onClick={handleSyncCoursesToFirestore}
+                    className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                    title="Upload all courses and modules to Cloud Firestore 'courses' collection"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    <span>{syncingCourses ? 'Syncing to Cloud...' : 'Sync Courses to Cloud'}</span>
+                  </button>
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-full border border-emerald-200">
+                    ✓ Synced with Student Portal
+                  </span>
+                </div>
               </div>
+
+              {syncCoursesResult && (
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2">
+                  <Database className="w-4 h-4 text-emerald-600" />
+                  <span>{syncCoursesResult}</span>
+                </div>
+              )}
 
               {/* 8 Semesters Navigation Pills */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 text-xs no-scrollbar">
@@ -3280,6 +3334,58 @@ export default function AdminDashboardPage({
                 ))}
               </div>
             </div>
+
+            {/* Live Firestore Quiz Assessments */}
+            {(() => {
+              const studentQuizzes = allQuizSubmissions.filter(q => q.studentEmail === selectedStudentModal.email);
+              return (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-emerald-600" />
+                      Cloud Quiz & Unit Assessment Logs ({studentQuizzes.length})
+                    </h4>
+                    <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Firestore: quiz_submissions
+                    </span>
+                  </div>
+
+                  {studentQuizzes.length > 0 ? (
+                    <div className="space-y-2">
+                      {studentQuizzes.map((quiz, qIdx) => (
+                        <div key={quiz.id || qIdx} className="p-3 rounded-2xl bg-emerald-50/40 border border-emerald-100 flex items-center justify-between text-xs">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200 text-[10px]">
+                                {quiz.courseCode}
+                              </span>
+                              <strong className="text-slate-900">{quiz.courseName}</strong>
+                              <span className="text-slate-400">· {quiz.unitTitle}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 font-mono">
+                              Doc: {quiz.id} · Submitted: {quiz.submittedAtStr || 'Recent'}
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <span className={`px-2.5 py-1 rounded-xl font-bold font-mono text-xs ${
+                              quiz.percentage >= 80 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {quiz.score} / {quiz.totalQuestions} ({quiz.percentage}%)
+                            </span>
+                            <span className="text-[10px] text-emerald-700 block font-semibold">{quiz.status}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-500 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      No cloud assessment submissions recorded yet for {selectedStudentModal.name}. Any quizzes completed via the student portal will instantly sync here from Cloud Firestore.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Pre-written Email Preview Drawer */}
             {showEmailPreview && (
