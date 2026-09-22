@@ -147,6 +147,205 @@ The platform is powered by live Cloud Firestore synchronization with 10 collecti
 
 ---
 
+## 📖 Granular Page-by-Page Breakdown (Har Ek Page Ka Deep Dive)
+
+Here is an exhaustive, element-by-element explanation of every single page and modal in the AISA platform:
+
+```
++---------------------------------------------------------------------------------------------------+
+|                                      APPLICATION ROUTE MAP                                       |
++---------------------------------------------------------------------------------------------------+
+|  1. LandingPage ('landing')           -> Public University Portal (Hero, Accreditations, Modules) |
+|  2. LoginPage ('login')               -> Student Auth (Google OAuth, Email/Pass, 1-Click Demo)    |
+|  3. AdminLoginPage ('admin_login')    -> Faculty Auth (Department Chair Demo, Verification)       |
+|  4. DashboardPage ('dashboard')       -> Student Hub (Semesters, Subjects, AI Chat, Exam Banner)  |
+|  5. ExamHallPage ('exam_hall')        -> Fullscreen Proctored Exam Room (Anti-Cheat, Report Card) |
+|  6. AdminDashboardPage ('admin_dash') -> Faculty Studio (Locks, Audit Queue, Ingestion, Roster)   |
+|  7. SubjectQuizModal (Modal)          -> Subject Practice MCQs with Instant Firestore Sync        |
+|  8. StudentNotesHub (Modal/View)      -> Faculty Broadcast Study Guides & PDF Downloads           |
++---------------------------------------------------------------------------------------------------+
+```
+
+---
+
+### 1️⃣ Page 1: `LandingPage.jsx` — Public University Front Portal
+- **Route:** `currentScreen === 'landing'`
+- **Purpose:** The official public gateway for students, prospective applicants, and accreditation committees.
+- **Key Elements & Features:**
+  - **3D Interactive Hero Canvas:** Built using Three.js / WebGL, displaying an animated floating university emblem with interactive mouse hover effects.
+  - **Hero Header & Tagline:** *"Next-Generation AI Learning Platform Engineered for Engineering Universities"*.
+  - **Live Floating Badges:** Dynamic floating pill chips showcasing *"Verified Syllabus Units"*, *"AI Socratic Tutor Active"*, and *"Anti-Cheating Honor Guard"*.
+  - **Showcase Video Banner:** Embedded university demonstration video showcasing the Socratic AI interaction.
+  - **Role Action Buttons:**
+    - **"Student Portal →"**: Navigates directly to `login`.
+    - **"Faculty / Admin Portal →"**: Navigates to `admin_login`.
+  - **Problem vs. Solution Comparison Matrix:** Side-by-side comparison explaining why standard ChatGPT harms academic learning (spoon-feeding direct answers) vs. how AISA reinforces learning through Socratic questioning.
+  - **8-Semester Curriculum Preview:** Interactive carousel displaying Semester 1 through Semester 8 course titles (Calculus, Data Structures, DBMS, AI/ML, Operating Systems, Computer Networks).
+  - **Footer:** Accreditation badges, institutional contact information, and copyright notice.
+
+---
+
+### 2️⃣ Page 2: `LoginPage.jsx` — Student Authentication Portal
+- **Route:** `currentScreen === 'login'`
+- **Purpose:** Authenticates enrolled students and loads their personalized academic records.
+- **Key Elements & Features:**
+  - **Institutional Login Form:** Clean card design with Email and Password input fields.
+  - **Google OAuth 2.0 Sign-In:** One-click login with university Google accounts (`signInWithPopup` via Firebase Auth).
+  - **⚡ 1-Click Quick Demo Login Button:** Instant presentation button preloading the profile of **Aditi Sharma** (`aditi.sharma@univ.edu`, Roll: `22BCS10492`, 3rd Year B.Tech CSE). This allows instant logins during project evaluations without typing credentials.
+  - **Form Validation & Safety:** Error toast alert if credentials are invalid.
+  - **"← Back to Overview"** button returning to `landing`.
+
+---
+
+### 3️⃣ Page 3: `AdminLoginPage.jsx` — Faculty & Administrator Access Portal
+- **Route:** `currentScreen === 'admin_login'`
+- **Purpose:** Secure authentication portal for university professors, department heads, and academic deans.
+- **Key Elements & Features:**
+  - **High-Security Institutional Card:** Distinctive dark slate and gold aesthetic denoting administrative privileges.
+  - **Department Selector:** Pre-selected to *Department of Computer Science & Engineering*.
+  - **⚡ 1-Click Faculty Demo Login Button:** Instantly signs in as **Dr. Rajesh Kumar** (`rajesh.kumar@univ.edu`, Faculty ID: `FAC-8092`, Department Chair).
+  - **Security Warning Notice:** Informs users that all administrative actions (exam locks, notes publishing, student email alerts) are audit-logged.
+  - **"← Back to Public Portal"** button returning to `landing`.
+
+---
+
+### 4️⃣ Page 4: `DashboardPage.jsx` — Student Learning Hub & Socratic AI Drawer
+- **Route:** `currentScreen === 'dashboard'`
+- **Purpose:** The core daily workspace for students to explore their syllabus, practice unit MCQs, enter exams, and receive Socratic tutoring.
+- **Layout Structure:**
+  - **A. Header Bar:**
+    - Displays Student Name, Roll Number, Academic Year, and active semester.
+    - **Live Exam Lockout Warning Banner:** If an exam is currently active or scheduled within 30 minutes, a prominent ticking countdown banner informs the student that AI queries are restricted.
+    - Logout button.
+  - **B. Step 1 — Semester Grid View (`currentStep === 'semesters'`):**
+    - Cards for Semesters 1 to 8.
+    - Shows total credits, subjects count, and status (*Open* for Sem 1-6, *Locked / Upcoming* for Sem 7-8).
+    - Clicking a semester smoothly transitions to Step 2.
+  - **C. Step 2 — Subject Cards View (`currentStep === 'subjects'`):**
+    - Subject category filters: *All*, *Core*, *Programming*, *Web & Systems*, *Labs*.
+    - Search input to filter subjects by code or title in real-time.
+    - **Subject Card Action Buttons:**
+      - **"Syllabus →"**: Opens the detailed unit breakdown.
+      - **"MCQs"**: Instantly launches `SubjectQuizModal` for that subject.
+      - **"Exam"**: If the subject has an official exam paper (e.g. `CS204` DBMS or `CS203` DSA), launches the dedicated proctored exam hall.
+  - **D. Step 3 — Subject Detail View (`currentStep === 'subject_detail'`):**
+    - Subject Hero Header with course title, code, and credits.
+    - **"Approved Textbook References"** section: Official recommended books (e.g. Korth & Silberschatz for DBMS, Cormen for DSA).
+    - **Syllabus Units Accordion (Unit 1 to Unit 5):** Complete syllabus topics, key definitions, and formal mathematical proofs.
+    - Action buttons: *"Take Practice MCQs"*, *"Enter Proctored Exam"*, and *"Launch AI Socratic Tutor"*.
+  - **E. 🏛️ Apex Proctored Midterm Examination Portal (Hero Banner):**
+    - Royal indigo/violet card displaying available midterm exam papers.
+    - Quick paper selector: `CS204: DBMS (20m)` vs `CS203: DSA (20m)`.
+    - **"Enter Examination Hall →"** button: Navigates full-screen into `ExamHallPage`.
+    - **"My Proctored Exam Records"**: Displays student's past completed attempts with Letter Grade badge (`A+`, `A`, `B`, `F`), score out of 30, submission timestamp, and Firestore cloud confirmation.
+  - **F. Cloud Practice Quiz Performance Section:**
+    - Live sync with Firestore collection `quiz_submissions`.
+    - Displays recent quiz attempts with score, percentage, and date.
+  - **G. Right-Side Socratic AI Drawer (`isChatOpen`):**
+    - Slide-out interactive chat assistant powered by Google Gemini.
+    - **Socratic Logic:** Rejects direct answer queries; prompts students with guiding hints.
+    - **Code & LaTeX Support:** Markdown rendering with syntax highlighting and copy code helper.
+    - **"Ask Teacher" Doubt Escalation Button:** Placed under each AI message. Allows students to report hallucinations or request faculty help.
+    - **"🎓 Verified Faculty Answer"** badge appears when a teacher resolves the doubt.
+
+---
+
+### 5️⃣ Page 5: `ExamHallPage.jsx` — Dedicated Full-Screen Proctored Examination Hall
+- **Route:** `currentScreen === 'exam_hall'`
+- **Purpose:** A dedicated, distraction-free examination room with maximum anti-cheating security. Replaces normal modals with an official full-screen exam interface.
+- **Anti-Cheating Security Protections:**
+  - 🚫 **Screenshot & Screen Capture Blocker:**
+    - Intercepts Windows `PrintScreen` (keycode 44).
+    - Intercepts Mac screenshot shortcuts: `Cmd + Shift + 3`, `Cmd + Shift + 4`, `Cmd + Shift + 5`.
+    - Intercepts Windows Snipping Tool: `Win + Shift + S` and `Ctrl + Shift + S`.
+    - **Emergency Screen Shield:** If any screenshot key is pressed, an emergency red overlay flashes, blurs all questions, wipes the clipboard via `navigator.clipboard.writeText('')`, and records a strike.
+  - 🚫 **Print Blocker:** `Ctrl+P` / `Cmd+P` blocked. CSS `@media print` hides all questions and renders a violation warning.
+  - 🚫 **Copy / Cut / Paste Blocked:** `Ctrl+C`, `Ctrl+V`, `Ctrl+X`, and right-click copy are blocked with alert toasts.
+  - 🚫 **Text Selection Disabled:** CSS `user-select: none` and `selectstart` event prevent selecting any question text.
+  - 🚫 **Right-Click Disabled:** Context menu is blocked with a security warning toast.
+  - 🚫 **DevTools Blocked:** `F12`, `Ctrl+Shift+I`, `Ctrl+Shift+J`, and `Ctrl+U` are disabled.
+  - 👁️ **Tab-Switch & Blur Tracking:** Switching browser tabs or minimizing the browser opens an **Honor Guard Violation Modal** and logs strikes.
+  - 💧 **Dynamic Anti-Leak Watermark:** The student's name, roll number, and course code repeat diagonally across the background to prevent phone camera leaks.
+  - 🖥️ **Fullscreen Mode:** One-click fullscreen toggle with warning banners if exited.
+- **Examination Layout:**
+  - **Top Bar:** Exam Code, Course Title, Candidate Name, Roll Number, Lockdown Status badge, Fullscreen button, and Countdown Timer (red pulse when < 5 mins).
+  - **Left Sidebar:** Candidate ID card with photo avatar, Section switcher (Sec A, Sec B, Sec C), Question Palette grid (1 to 6 with color indicators: Answered, Review, Unanswered, Active), and "Submit Final Paper" button.
+  - **Center Canvas (Multi-Format Question Renderers):**
+    - **Section A (MCQs - 12 Marks):** Radio option cards with hover and active states.
+    - **Section B (Match the Following - 10 Marks):** Interactive dual columns (Column A & Column B). Students click an item in Column A (amber highlight), then click its pair in Column B (emerald link badge). Includes unlink option.
+    - **Section C (Assertion & Reasoning - 8 Marks):** Dual Assertion (A) and Reason (R) cards with standard 4 university options.
+  - **Bottom Navigation:** *"Previous"*, *"Mark for Review & Next"*, *"Clear Answer"*, and *"Save & Next"*.
+- **Auto-Grading & Post-Submission Report Card:**
+  - Confetti celebration upon submission.
+  - Letter Grade badge (**A+**, **A**, **B**, **C**, **F**), Total Score (out of 30), and Percentage.
+  - Sectional breakdown progress bars (Sec A: 12m, Sec B: 10m, Sec C: 8m).
+  - Full Question-by-Question Review with faculty answers and detailed explanations.
+  - One-click print/download report card button (`window.print()`).
+  - Automatic permanent sync to Cloud Firestore collection `exam_attempts`.
+  - *"Return to Student Dashboard"* button.
+
+---
+
+### 6️⃣ Modal: `SubjectQuizModal.jsx` — Unit Practice Quiz Modal
+- **Trigger:** Click **"MCQs"** on any subject card or **"Take Practice Quiz"** banner.
+- **Purpose:** Quick self-assessment testing conceptual clarity on specific subject units.
+- **Key Elements & Features:**
+  - 3-5 randomized conceptual MCQs tailored to the chosen course.
+  - Radio button options with immediate answer tracking.
+  - Live progress meter (Question X of Y).
+  - Submission auto-grading: Displays score, percentage, and pass/fail indicator.
+  - Permanent synchronization to Cloud Firestore collection `quiz_submissions`.
+
+---
+
+### 7️⃣ Page 7: `AdminDashboardPage.jsx` — Faculty Governance, Lockdown Controls & Roster
+- **Route:** `currentScreen === 'admin_dashboard'`
+- **Purpose:** Complete command center for faculty and department chairs to manage exams, view student submissions, resolve doubts, and ingest syllabus materials.
+- **4 Main Management Tabs:**
+  - **Tab 1: 🔒 Exam Hall & Lockdown Controls:**
+    - Live counters: Active Exam Locks, Scheduled Exams, Pending AI Flags.
+    - **Scheduled Exam Windows Table:** Lists upcoming exam dates, start times, and end times.
+    - **Force Lock / Unlock Override:** Teachers can manually trigger an exam lockout at any time with 1 click.
+    - **"Schedule New Exam Window" Form:** Teachers can set up new examination timetables with date, start time, end time, course, and department.
+    - **🏛️ Live Proctored Examination Submissions Roster:**
+      - Real-time table synced directly from Cloud Firestore collection `exam_attempts`.
+      - Displays: Student Name & Email, Exam Paper Code, Score out of 30, Letter Grade badge (`A+`, `A`, `B`, `C`, `F`), Sectional Breakdown (MCQ, Match, Assertion), Time Taken, Anti-Cheating Tab-Switch Violations count, Timestamp, and Firestore Document ID.
+  - **Tab 2: ⚖️ Responsible AI Audit Queue:**
+    - Displays all doubts escalated by students who clicked *"Ask Teacher"* in the AI chat.
+    - Filters: *All*, *Pending Review*, *Resolved*.
+    - **Forensic Dossier Modal:** Shows the student's exact prompt, the AI's response, student's personal notes, and hallucination feedback.
+    - **Faculty Verified Reply Composer:** Teachers type their authoritative solution and click dispatch. It instantly appears in the student's chat drawer with a verified faculty seal.
+  - **Tab 3: 📁 Curriculum & Notes Studio (RAG Ingestion):**
+    - Drag-and-drop syllabus PDF and lecture notes upload dropzone with 0% to 100% animated progress meter.
+    - **AI Study Notes Generator:** Automatically analyzes uploaded notes and synthesizes a high-yield study guide.
+    - **Cohort Broadcast Button:** Pushes the generated notes directly into every student's *StudentNotesHub*.
+    - **"Sync to Firestore" Button:** Syncs all curriculum courses to Firestore collection `courses`.
+  - **Tab 4: 👥 Student Directory & Academic Performance Roster:**
+    - Directory of 42 student profiles with CGPA, attendance, semester, and academic status (*Top Performer*, *On Track*, *Needs Support*).
+    - **Student Details Modal:** Displays student's enrolled courses, attendance, continuous assessment marks, practice quiz scores, and proctored exam transcripts.
+    - **1-Click Performance Email Dispatcher:** Pre-writes a detailed academic performance letter and provides buttons to open in default mail client (`mailto:`) or open directly in Gmail Web compose.
+
+---
+
+### 8️⃣ Component: `StudentNotesHub.jsx` — Notes & Revision Hub
+- **Purpose:** Student library for downloading syllabus reference sheets and faculty study guides.
+- **Key Elements & Features:**
+  - Course-wise document filtering.
+  - PDF preview and download buttons.
+  - Real-time notification toast when faculty broadcasts new notes from the Admin studio.
+
+---
+
+### 9️⃣ Components: `Navbar.jsx` & `ScrollProgress.jsx` — Navigation & Status
+- **Purpose:** Persistent top navigation bar and reading progress meter.
+- **Key Elements & Features:**
+  - **Thin Gold Scroll Progress Bar (`ScrollProgress.jsx`):** Smoothly indicates scroll progress on long landing pages.
+  - **Institutional Branding & Logo:** Apex Institute of Science & Technology crest.
+  - **Portal Role Switcher:** Quick switching between Student Portal and Faculty / Admin Portal.
+  - **Live Exam Lockdown Indicator:** Shows whether campus examination lockdown is active.
+
+---
+
 ## 💻 Step-by-Step Setup Guide (For Teammates)
 
 Follow these steps to run the complete project on your computer:
