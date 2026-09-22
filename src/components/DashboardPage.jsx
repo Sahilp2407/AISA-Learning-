@@ -628,7 +628,7 @@ Grounded in ITM University B.Tech CSE Curriculum
         </header>
 
         {/* Dynamic Main Workspace Container */}
-        <main className="p-6 sm:p-8 lg:p-10 max-w-6xl w-full mx-auto space-y-6">
+        <main className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1536px] w-full mx-auto space-y-6">
           
           {/* Prominent Active Exam Lockdown Banner (30-min buffer active) */}
           {isExamMode && (
@@ -690,7 +690,7 @@ Grounded in ITM University B.Tech CSE Curriculum
               className="space-y-6 text-left"
             >
               {/* Header Title & Count */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                 <div>
                   <h1 className="font-sans text-2xl sm:text-3xl font-extrabold text-charcoal tracking-tight">
                     B.Tech CSE Curriculum (2024–28)
@@ -700,45 +700,45 @@ Grounded in ITM University B.Tech CSE Curriculum
                   </p>
                 </div>
 
-                <span className="self-start sm:self-auto text-xs font-bold bg-white px-3 py-1.5 rounded-xl border border-borderLight text-charcoal shadow-xs">
+                <span className="self-start sm:self-auto text-xs font-bold bg-white px-3.5 py-1.5 rounded-xl border border-borderLight text-charcoal shadow-xs">
                   8 Total Semesters
                 </span>
               </div>
 
               {/* Proctored University Examination Hall (Firestore 'exam_attempts') */}
-              <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#E8DFC8] shadow-sm hover:shadow-md transition-all relative overflow-hidden space-y-6 text-[#1E1B18]">
-                {/* Subtle warm ambient lighting accents */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-amber-400/10 via-orange-400/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-16 -mt-16"></div>
-                <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-gradient-to-tr from-amber-200/15 via-[#FDFCF7] to-transparent rounded-full blur-2xl pointer-events-none"></div>
+              <div className="rounded-3xl bg-white border border-[#E8DFC8] shadow-sm hover:shadow-md transition-all relative overflow-hidden text-[#1E1B18]">
+                {/* Ambient subtle glow */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-400/10 via-orange-400/5 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
 
-                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-                  <div className="space-y-2.5">
+                {/* Top Banner Row: Badges, Title & Quick Launch */}
+                <div className="p-5 sm:p-6 border-b border-[#E8DFC8]/70 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                  <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-[#ED7D31] bg-amber-50 border border-amber-200/90 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#ED7D31] bg-amber-50 border border-amber-200/90 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-2xs">
                         <GraduationCap className="w-3.5 h-3.5 text-[#ED7D31]" />
                         Official Examination Hall
                       </span>
-                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-2xs">
+                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-2xs">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                        AI-Proctored · Lock-Down Guard
+                        AI-Proctored · Lock-Down Honor Guard
                       </span>
-                      <span className="text-[10px] font-mono text-stone-500 bg-stone-100 border border-stone-200/70 px-2.5 py-1 rounded-full">
+                      <span className="text-[10px] font-mono text-stone-500 bg-[#FAF7EE] border border-[#E8DFC8] px-2 py-0.5 rounded-full">
                         Cloud: exam_attempts
                       </span>
                     </div>
 
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-[#1E1B18] flex items-center gap-2.5">
+                    <h3 className="text-xl sm:text-2xl font-black tracking-tight text-[#1E1B18] flex items-center gap-2">
                       <span>🏛️ Apex Proctored Midterm Examination Portal</span>
                     </h3>
 
-                    <p className="text-xs sm:text-sm text-[#6B6358] max-w-2xl leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[#6B6358] max-w-3xl leading-relaxed">
                       Multi-format evaluation platform: <strong className="text-[#1E1B18]">Section A (MCQs)</strong> · <strong className="text-[#1E1B18]">Section B (Interactive Matching Matrix)</strong> · <strong className="text-[#1E1B18]">Section C (Assertion & Reasoning)</strong>. Automatically evaluated with instantaneous certified Report Cards.
                     </p>
                   </div>
 
-                  {/* Quick Paper Switcher & Launch Button */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 self-start lg:self-center shrink-0">
-                    <div className="flex bg-[#FAF7EE] p-1.5 rounded-2xl border border-[#E8DFC8]">
+                  {/* Right: Paper Selector Pills + Enter Hall CTA */}
+                  <div className="flex flex-wrap items-center gap-3 shrink-0 self-start xl:self-center">
+                    <div className="flex bg-[#FAF7EE] p-1 rounded-2xl border border-[#E8DFC8]">
                       {UNIVERSITY_EXAMS_DATA.map((ex) => (
                         <button
                           key={ex.id}
@@ -746,7 +746,7 @@ Grounded in ITM University B.Tech CSE Curriculum
                           onClick={() => setSelectedExam(ex)}
                           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             selectedExam.id === ex.id
-                              ? 'bg-[#ED7D31] text-white shadow-sm font-black'
+                              ? 'bg-[#ED7D31] text-white shadow-xs font-black'
                               : 'text-[#6B6358] hover:text-[#1E1B18] hover:bg-stone-200/50'
                           }`}
                         >
@@ -764,7 +764,7 @@ Grounded in ITM University B.Tech CSE Curriculum
                           setExamModalOpen(true);
                         }
                       }}
-                      className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#ED7D31] to-[#F39C12] hover:from-[#d96c24] hover:to-[#e08e0b] text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      className="px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-[#ED7D31] to-[#F39C12] hover:from-[#d96c24] hover:to-[#e08e0b] text-white font-black text-xs sm:text-sm shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
                     >
                       <GraduationCap className="w-4 h-4 text-white" />
                       <span>Enter Examination Hall</span>
@@ -773,46 +773,75 @@ Grounded in ITM University B.Tech CSE Curriculum
                   </div>
                 </div>
 
-                {/* Active Selected Exam Details Bar */}
-                <div className="relative z-10 p-4 rounded-2xl bg-[#FAF7EE] border border-[#E8DFC8] flex flex-wrap items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-mono font-black text-[#ED7D31] bg-white px-2.5 py-1 rounded-lg border border-[#E8DFC8] shadow-2xs">
-                      {selectedExam.code}
-                    </span>
-                    <span className="font-black text-sm text-[#1E1B18]">{selectedExam.name}</span>
-                    <span className="text-stone-500 hidden sm:inline font-medium">· {selectedExam.title}</span>
-                  </div>
+                {/* Main Split Grid: Selected Exam Specs (Left 7 Cols) + Student Performance / Scorecard (Right 5 Cols) */}
+                <div className="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                  {/* Left Column (7 cols): Selected Paper Details & Specs */}
+                  <div className="lg:col-span-7 bg-[#FAF7EE]/70 border border-[#E8DFC8] rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2 pb-3 border-b border-[#E8DFC8]/70">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono font-black text-xs text-[#ED7D31] bg-white px-2.5 py-1 rounded-lg border border-[#E8DFC8] shadow-2xs">
+                            {selectedExam.code}
+                          </span>
+                          <span className="font-black text-sm sm:text-base text-[#1E1B18]">{selectedExam.name}</span>
+                        </div>
+                        <span className="text-[11px] font-semibold text-stone-500 bg-white px-2.5 py-0.5 rounded-full border border-[#E8DFC8]">
+                          Semester {selectedExam.semester || 2}
+                        </span>
+                      </div>
 
-                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5 text-xs text-stone-600">
-                    <span className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-[#E8DFC8] font-semibold text-stone-700">
-                      <Clock className="w-3.5 h-3.5 text-[#ED7D31]" />
-                      {selectedExam.durationMinutes} Minutes
-                    </span>
-                    <span className="flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                      <Award className="w-3.5 h-3.5 text-emerald-600" />
-                      Total {selectedExam.totalMarks} Marks (Pass: {selectedExam.passingMarks})
-                    </span>
-                    <span className="hidden md:inline text-stone-500 font-medium">
-                      3 Sections · Instant Report Card
-                    </span>
-                  </div>
-                </div>
+                      <p className="text-xs text-[#6B6358] font-medium leading-relaxed">
+                        {selectedExam.title} · Complete proctored midterm test with locked screen integrity verification.
+                      </p>
 
-                {/* Student's Past Exam Attempts & Report Cards */}
-                {studentExamAttempts.length > 0 && (
-                  <div className="relative z-10 pt-4 space-y-3 border-t border-[#E8DFC8]">
-                    <div className="flex items-center justify-between">
-                      <span className="font-black text-sm text-[#1E1B18] flex items-center gap-2">
-                        <Award className="w-4 h-4 text-[#ED7D31]" />
-                        My Proctored Exam Records ({studentExamAttempts.length} Completed)
-                      </span>
-                      <span className="text-[11px] text-stone-500 font-medium bg-[#FAF7EE] px-2.5 py-0.5 rounded-full border border-[#E8DFC8]">
-                        Synced to Firestore
-                      </span>
+                      <div className="grid grid-cols-3 gap-2.5 pt-1">
+                        <div className="bg-white p-2.5 rounded-xl border border-[#E8DFC8] text-center">
+                          <span className="text-[10px] font-bold text-stone-400 block uppercase">Duration</span>
+                          <strong className="text-xs sm:text-sm font-black text-[#1E1B18] flex items-center justify-center gap-1 mt-0.5">
+                            <Clock className="w-3.5 h-3.5 text-[#ED7D31]" />
+                            {selectedExam.durationMinutes} Mins
+                          </strong>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-[#E8DFC8] text-center">
+                          <span className="text-[10px] font-bold text-stone-400 block uppercase">Total Marks</span>
+                          <strong className="text-xs sm:text-sm font-black text-emerald-800 flex items-center justify-center gap-1 mt-0.5">
+                            <Award className="w-3.5 h-3.5 text-emerald-600" />
+                            {selectedExam.totalMarks} (Pass: {selectedExam.passingMarks})
+                          </strong>
+                        </div>
+                        <div className="bg-white p-2.5 rounded-xl border border-[#E8DFC8] text-center">
+                          <span className="text-[10px] font-bold text-stone-400 block uppercase">Format</span>
+                          <strong className="text-xs sm:text-sm font-black text-[#1E1B18] block mt-0.5">
+                            3 Sections
+                          </strong>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                      {studentExamAttempts.map((attempt, idx) => {
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-3 text-[11px] text-stone-500 border-t border-[#E8DFC8]/60">
+                      <span className="flex items-center gap-1.5 font-semibold text-stone-600">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        Anti-Cheating Guard & Auto Screen Recording
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (onEnterExamHall) onEnterExamHall(selectedExam);
+                          else setExamModalOpen(true);
+                        }}
+                        className="text-xs font-black text-[#ED7D31] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Begin Examination</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Right Column (5 cols): Student's Latest Performance / History */}
+                  <div className="lg:col-span-5 bg-[#FAF7EE]/70 border border-[#E8DFC8] rounded-2xl p-5 flex flex-col justify-between space-y-3">
+                    {studentExamAttempts.length > 0 ? (
+                      (() => {
+                        const attempt = studentExamAttempts[0];
                         const examCode = attempt.courseCode || attempt.examCode || attempt.examId || 'CS204';
                         const examName = attempt.courseName || attempt.examName || attempt.examTitle || 'DBMS - SQL & Relational Architecture';
                         const score = attempt.scoreObtained ?? attempt.totalMarksObtained ?? 0;
@@ -827,7 +856,6 @@ Grounded in ITM University B.Tech CSE Curriculum
                           percentage >= 40 ? 'C' : 'F'
                         );
 
-                        // Badge styling based on grade
                         const gradeBadgeStyle =
                           grade.startsWith('A')
                             ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
@@ -838,13 +866,20 @@ Grounded in ITM University B.Tech CSE Curriculum
                             : 'bg-rose-50 text-rose-800 border-rose-200';
 
                         return (
-                          <div 
-                            key={attempt.id || idx}
-                            className="p-4 rounded-2xl bg-[#FAF7EE]/70 hover:bg-white border border-[#E8DFC8] hover:border-amber-300 transition-all duration-200 shadow-2xs hover:shadow-md space-y-3 group flex flex-col justify-between"
-                          >
-                            <div className="space-y-3">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="font-black text-xs text-[#1E1B18] flex items-center gap-1.5">
+                                <Award className="w-4 h-4 text-[#ED7D31]" />
+                                Latest Verified Exam Record
+                              </span>
+                              <span className="text-[10px] font-mono text-stone-500 bg-white px-2 py-0.5 rounded border border-[#E8DFC8]">
+                                {studentExamAttempts.length} Completed
+                              </span>
+                            </div>
+
+                            <div className="bg-white p-3.5 rounded-xl border border-[#E8DFC8] space-y-2.5 shadow-2xs">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-mono font-black text-[#ED7D31] bg-white px-2.5 py-0.5 rounded-lg border border-[#E8DFC8] shadow-2xs">
+                                <span className="text-xs font-mono font-black text-[#ED7D31] bg-[#FAF7EE] px-2 py-0.5 rounded border border-[#E8DFC8]">
                                   {examCode}
                                 </span>
                                 <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${gradeBadgeStyle}`}>
@@ -852,14 +887,10 @@ Grounded in ITM University B.Tech CSE Curriculum
                                 </span>
                               </div>
 
-                              <div className="space-y-1">
-                                <p className="text-xs font-extrabold text-[#1E1B18] line-clamp-1" title={examName}>
-                                  {examName}
-                                </p>
-                                <div className="flex items-baseline justify-between">
-                                  <span className="text-[11px] font-semibold text-stone-500">
-                                    Evaluation Score
-                                  </span>
+                              <div>
+                                <p className="text-xs font-black text-[#1E1B18] truncate">{examName}</p>
+                                <div className="flex items-baseline justify-between mt-1">
+                                  <span className="text-[11px] font-semibold text-stone-500">Official Score</span>
                                   <div className="text-sm font-black">
                                     <span className={isPass ? 'text-emerald-700' : 'text-rose-700'}>{score}</span>
                                     <span className="text-xs text-stone-400 font-bold"> / {total} Marks</span>
@@ -867,43 +898,48 @@ Grounded in ITM University B.Tech CSE Curriculum
                                 </div>
                               </div>
 
-                              {/* Score progress bar */}
                               <div className="w-full bg-stone-200/70 rounded-full h-1.5 overflow-hidden">
                                 <div 
                                   className={`h-full rounded-full transition-all duration-500 ${isPass ? 'bg-gradient-to-r from-amber-500 to-emerald-500' : 'bg-rose-500'}`} 
                                   style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
                                 />
                               </div>
-                            </div>
 
-                            <div className="space-y-2 pt-2 border-t border-[#E8DFC8]/60">
-                              <div className="flex items-center justify-between text-[10px] text-stone-500">
+                              <div className="flex items-center justify-between text-[10px] text-stone-500 pt-1">
                                 <span className="font-mono flex items-center gap-1">
                                   {attempt.isCloud ? '☁️ Cloud Verified' : '💾 Local Synced'}
                                 </span>
                                 <span>{attempt.submittedAtFormatted || 'Recent'}</span>
                               </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const matched = UNIVERSITY_EXAMS_DATA.find(e => e.id === attempt.examId || e.code === examCode) || selectedExam;
-                                  if (onEnterExamHall) {
-                                    onEnterExamHall(matched);
-                                  }
-                                }}
-                                className="w-full py-1.5 px-3 rounded-xl bg-white hover:bg-[#FAF7EE] border border-[#E8DFC8] text-xs font-bold text-stone-700 hover:text-[#ED7D31] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                              >
-                                <span>Enter / Re-take Exam</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </button>
                             </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const matched = UNIVERSITY_EXAMS_DATA.find(e => e.id === attempt.examId || e.code === examCode) || selectedExam;
+                                if (onEnterExamHall) onEnterExamHall(matched);
+                              }}
+                              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-[#FAF7EE] border border-[#E8DFC8] text-xs font-bold text-stone-700 hover:text-[#ED7D31] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                            >
+                              <span>Re-take / Review Exam</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         );
-                      })}
-                    </div>
+                      })()
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-2">
+                        <div className="w-10 h-10 rounded-2xl bg-amber-50 text-[#ED7D31] flex items-center justify-center border border-amber-200">
+                          <Award className="w-5 h-5" />
+                        </div>
+                        <h4 className="text-xs font-black text-[#1E1B18]">No Proctored Attempts Yet</h4>
+                        <p className="text-[11px] text-[#6B6358] max-w-xs leading-relaxed">
+                          Select your university exam paper and launch the proctored hall to get evaluated.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Cloud Quiz & Assessment Records (Firestore Synced) */}
