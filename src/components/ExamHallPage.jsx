@@ -54,6 +54,7 @@ export default function ExamHallPage({
   const [securityStrikes, setSecurityStrikes] = useState(0);
   const [securityToast, setSecurityToast] = useState(null);
   const [isScreenShieldActive, setIsScreenShieldActive] = useState(false);
+  const [isWindowBlurred, setIsWindowBlurred] = useState(false);
   const [shieldReason, setShieldReason] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTabSwitchModal, setShowTabSwitchModal] = useState(false);
@@ -181,43 +182,103 @@ export default function ExamHallPage({
       return false;
     };
 
-    // 4. Keyboard Shortcuts: Block Screenshot keys, Print, DevTools, Copy/Paste
+    // Keyup listener specifically for PrintScreen (Windows often suppresses keydown at kernel level but emits keyup)
+    const handleKeyUp = (e) => {
+      const isPrintScreen = 
+        e.key === 'PrintScreen' || 
+        e.code === 'PrintScreen' || 
+        e.keyCode === 44 || 
+        e.key === 'Snapshot' || 
+        e.key === 'Print';
+
+      if (isPrintScreen) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenShield('📸 PrintScreen / Screenshot Key Release Detected & Obscured!');
+        return false;
+      }
+    };
+
+    // 4. Comprehensive Keyboard Shortcuts Blocker: Screenshots, Snipping Tools, Print, DevTools, Copy/Paste
     const handleKeyDown = (e) => {
       const key = e.key;
+      const code = e.code;
       const isCtrlOrMeta = e.ctrlKey || e.metaKey;
 
-      // PrintScreen (Windows key code 44 or key === 'PrintScreen')
-      if (key === 'PrintScreen' || e.keyCode === 44) {
-        e.preventDefault();
-        triggerScreenShield('PrintScreen / Screenshot Attempt Detected & Obscured!');
-        return false;
-      }
+      // A. All PrintScreen variants (Windows, Linux, External Keyboards)
+      const isPrintScreen = 
+        key === 'PrintScreen' || 
+        code === 'PrintScreen' || 
+        e.keyCode === 44 || 
+        key === 'Snapshot' || 
+        key === 'Print';
 
-      // Mac Screenshot Shortcuts: Cmd + Shift + 3, Cmd + Shift + 4, Cmd + Shift + 5
-      if (isCtrlOrMeta && e.shiftKey && ['3', '4', '5'].includes(key)) {
-        e.preventDefault();
-        e.stopPropagation();
-        triggerScreenShield('Mac Screen Capture Shortcut (Cmd+Shift+3/4/5) Blocked!');
-        return false;
-      }
-
-      // Windows Snipping Tool: Win + Shift + S or Ctrl + Shift + S
-      if (e.shiftKey && (key === 's' || key === 'S') && isCtrlOrMeta) {
+      if (isPrintScreen) {
         e.preventDefault();
         e.stopPropagation();
-        triggerScreenShield('Snipping Tool Shortcut Blocked!');
+        triggerScreenShield('📸 PrintScreen Shortcut Detected & Canvas Obscured!');
         return false;
       }
 
-      // Print Document: Ctrl + P / Cmd + P
-      if (isCtrlOrMeta && (key === 'p' || key === 'P')) {
+      // B. Mac Screenshot Shortcuts:
+      // Cmd + Shift + 3 (Full Screen)
+      // Cmd + Shift + 4 (Selection Crosshair)
+      // Cmd + Shift + 5 (Screen Capture Bar)
+      // Cmd + Shift + 6 (Touch Bar Screenshot)
+      // Note: On Mac, Shift + 3/4/5/6 produce '#', '$', '%', '^' in e.key; e.code produces 'Digit3', etc.
+      const isMacScreenshot = 
+        isCtrlOrMeta && 
+        e.shiftKey && 
+        (
+          ['Digit3', 'Digit4', 'Digit5', 'Digit6'].includes(code) || 
+          ['3', '4', '5', '6', '#', '$', '%', '^'].includes(key)
+        );
+
+      if (isMacScreenshot) {
         e.preventDefault();
         e.stopPropagation();
-        triggerScreenShield('Document Printing Prohibited!');
+        triggerScreenShield('📸 Mac Screen Capture Shortcut (Cmd+Shift+3/4/5) Blocked!');
         return false;
       }
 
-      // Copy / Paste / Cut / Select All: Ctrl + C, V, X, A
+      // C. Windows Snipping Tool: Win + Shift + S or Ctrl + Shift + S
+      const isSnippingTool = 
+        e.shiftKey && 
+        (isCtrlOrMeta || e.altKey) && 
+        (key === 's' || key === 'S' || code === 'KeyS');
+
+      if (isSnippingTool) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenShield('📸 Snipping Tool Shortcut (Shift+S) Blocked!');
+        return false;
+      }
+
+      // D. Windows Game Bar / Screen Recording shortcuts: Win + Alt + R / G
+      if (e.altKey && isCtrlOrMeta && (key === 'g' || key === 'G' || key === 'r' || key === 'R' || code === 'KeyG' || code === 'KeyR')) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenShield('🎥 Screen Recording / Capture Shortcut Blocked!');
+        return false;
+      }
+
+      // E. Print Document: Ctrl + P / Cmd + P
+      if (isCtrlOrMeta && (key === 'p' || key === 'P' || code === 'KeyP')) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenShield('🖨️ Document Printing Prohibited in Examination Hall!');
+        return false;
+      }
+
+      // F. Save Webpage: Ctrl + S / Cmd + S
+      if (isCtrlOrMeta && (key === 's' || key === 'S' || code === 'KeyS') && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        showViolationToast('🔒 Saving exam page content is disabled.');
+        return false;
+      }
+
+      // G. Copy / Paste / Cut / Select All: Ctrl + C, V, X, A
       if (isCtrlOrMeta && ['c', 'v', 'x', 'a', 'C', 'V', 'X', 'A'].includes(key)) {
         e.preventDefault();
         e.stopPropagation();
@@ -225,8 +286,8 @@ export default function ExamHallPage({
         return false;
       }
 
-      // Inspect Element / DevTools: F12, Ctrl+Shift+I, Cmd+Opt+I, Ctrl+Shift+J, Ctrl+U
-      if (key === 'F12') {
+      // H. Inspect Element / DevTools: F12, Ctrl+Shift+I, Cmd+Opt+I, Ctrl+Shift+J, Ctrl+Shift+C
+      if (key === 'F12' || code === 'F12') {
         e.preventDefault();
         showViolationToast('🔒 Developer Tools inspection disabled.');
         return false;
@@ -238,7 +299,7 @@ export default function ExamHallPage({
         return false;
       }
 
-      if (isCtrlOrMeta && (key === 'u' || key === 'U' || key === 's' || key === 'S')) {
+      if (isCtrlOrMeta && (key === 'u' || key === 'U' || code === 'KeyU')) {
         e.preventDefault();
         showViolationToast('🔒 Page source inspection is disabled.');
         return false;
@@ -257,9 +318,20 @@ export default function ExamHallPage({
       }
     };
 
-    // 6. Window Blur Detection
+    // 6. Window Blur Detection (External screenshot tools, Snipping Tool, floating widgets)
     const handleWindowBlur = () => {
-      setSecurityToast('⚠️ Window Focus Lost! Please remain in the examination tab.');
+      setIsWindowBlurred(true);
+      // Immediately clear clipboard if any external tool attempted to capture
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText('');
+        }
+      } catch (err) {}
+      setSecurityToast('⚠️ Window Focus Lost! External capture utilities are censored.');
+    };
+
+    const handleWindowFocus = () => {
+      setIsWindowBlurred(false);
     };
 
     window.addEventListener('contextmenu', handleContextMenu);
@@ -268,9 +340,11 @@ export default function ExamHallPage({
     window.addEventListener('paste', handlePaste);
     window.addEventListener('selectstart', handleSelectStart);
     window.addEventListener('dragstart', handleDragStart);
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('keyup', handleKeyUp, true);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
 
     return () => {
       document.body.classList.remove('exam-lockdown-active');
@@ -280,9 +354,11 @@ export default function ExamHallPage({
       window.removeEventListener('paste', handlePaste);
       window.removeEventListener('selectstart', handleSelectStart);
       window.removeEventListener('dragstart', handleDragStart);
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('keyup', handleKeyUp, true);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
     };
   }, [isSubmitted]);
 
@@ -505,6 +581,32 @@ export default function ExamHallPage({
             </p>
             <div className="mt-4 px-4 py-2 rounded-xl bg-rose-900/60 border border-rose-500/40 text-xs font-mono text-rose-200">
               Security Strike #{securityStrikes} Recorded · Clipboard Emptied
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Privacy Screen Blinder on Window Blur (Blocks Snipping Tool, Mac Grab, Lightshot & OS overlays) */}
+      <AnimatePresence>
+        {isWindowBlurred && !isSubmitted && !isScreenShieldActive && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-stone-900/90 backdrop-blur-3xl flex flex-col items-center justify-center p-6 text-center text-white select-none cursor-pointer"
+            onClick={() => setIsWindowBlurred(false)}
+          >
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-[#ED7D31] flex items-center justify-center mb-4">
+              <EyeOff className="w-8 h-8" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              EXAMINATION CANVAS CENSOR ACTIVE
+            </h2>
+            <p className="text-sm text-stone-300 max-w-md mt-2 font-medium">
+              Window focus lost (screenshot utility, snipping tool, or application switch detected). Question canvas is censored for academic integrity.
+            </p>
+            <div className="mt-5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ED7D31] to-[#E06E22] text-white font-bold text-xs shadow-lg hover:brightness-105 transition-all">
+              Click Anywhere on Canvas to Resume
             </div>
           </motion.div>
         )}
