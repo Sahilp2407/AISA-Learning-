@@ -58,7 +58,8 @@ import {
   Mail,
   Inbox,
   ExternalLink,
-  Share2
+  Share2,
+  Trash2
 } from 'lucide-react';
 import { generateSocraticResponse } from '../services/geminiService';
 import { SEMESTERS_DATA } from '../data/curriculumData';
@@ -138,6 +139,28 @@ export default function DashboardPage({
   const [flagModalOpen, setFlagModalOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('Citation Verification Needed');
   const [flaggedSuccess, setFlaggedSuccess] = useState(false);
+
+  // Clear Chat State & Handler
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [chatClearToast, setChatClearToast] = useState(null);
+
+  const handleClearChat = () => {
+    const welcome = [
+      {
+        sender: 'ai',
+        text: 'Hello! Chat history has been cleared. Ask me any conceptual question, equation derivation, or practice problem from your enrolled course.',
+        time: 'Just now',
+        citations: ['Syllabus Ref: Semester 2 Units']
+      }
+    ];
+    setChatMessages(welcome);
+    try {
+      localStorage.removeItem('aisa_chat_history');
+    } catch (e) {}
+    setShowClearConfirm(false);
+    setChatClearToast('Chat history cleared!');
+    setTimeout(() => setChatClearToast(null), 2500);
+  };
 
   // Resource Download Toast
   const [downloadToast, setDownloadToast] = useState(null);
@@ -1500,15 +1523,27 @@ Grounded in ITM University B.Tech CSE Curriculum
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(prev => !prev)}
+                  disabled={chatMessages.length <= 1}
+                  className="px-2 py-1 rounded-lg text-xs font-bold text-stone-600 hover:text-rose-600 hover:bg-rose-50 border border-stone-200/80 hover:border-rose-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                  title="Clear Chat History"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-stone-500 hover:text-rose-600" />
+                  <span className="text-[11px]">Clear</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setFlagModalOpen(true)}
-                  className="p-1.5 rounded-lg text-charcoal-muted hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                  className="p-1.5 rounded-lg text-charcoal-muted hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
                   title="Flag for Faculty Review"
                 >
                   <Flag className="w-3.5 h-3.5" />
                 </button>
                 <button
+                  type="button"
                   onClick={() => setIsChatOpen(false)}
                   className="p-1.5 rounded-lg text-charcoal-muted hover:text-charcoal hover:bg-gray-200 transition-colors cursor-pointer"
                   title="Close Chat"
@@ -1517,6 +1552,40 @@ Grounded in ITM University B.Tech CSE Curriculum
                 </button>
               </div>
             </div>
+
+            {/* Clear Chat Confirmation Banner */}
+            {showClearConfirm && (
+              <div className="bg-rose-50 border-b border-rose-200 px-4 py-2.5 flex items-center justify-between text-xs text-rose-900 animate-fadeIn">
+                <span className="font-bold text-[11px] flex items-center gap-1.5">
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  Clear entire chat history?
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleClearChat}
+                    className="px-2.5 py-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black cursor-pointer shadow-xs transition-colors"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowClearConfirm(false)}
+                    className="px-2 py-1 rounded-md bg-white hover:bg-rose-100 text-rose-800 text-[10px] font-bold border border-rose-200 cursor-pointer transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Clear Chat Success Toast */}
+            {chatClearToast && (
+              <div className="bg-emerald-50 border-b border-emerald-200 px-3 py-1.5 text-center text-[11px] font-bold text-emerald-800 flex items-center justify-center gap-1.5 animate-fadeIn">
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{chatClearToast}</span>
+              </div>
+            )}
 
             {/* Exam Locked Notice if exam is active */}
             {isExamMode ? (
