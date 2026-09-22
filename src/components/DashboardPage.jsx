@@ -43,7 +43,6 @@ import {
   Check,
   AlertTriangle,
   RotateCcw,
-  Key,
   Download,
   BookCheck,
   BrainCircuit,
@@ -61,7 +60,7 @@ import {
   ExternalLink,
   Share2
 } from 'lucide-react';
-import { generateSocraticResponse, getGeminiApiKey, setGeminiApiKey } from '../services/geminiService';
+import { generateSocraticResponse } from '../services/geminiService';
 import { SEMESTERS_DATA } from '../data/curriculumData';
 import { formatTime12Hr, getTimeString } from '../services/examLockService';
 import { 
@@ -139,11 +138,6 @@ export default function DashboardPage({
   const [flagModalOpen, setFlagModalOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('Citation Verification Needed');
   const [flaggedSuccess, setFlaggedSuccess] = useState(false);
-
-  // Gemini API Key Settings Modal
-  const [keyModalOpen, setKeyModalOpen] = useState(false);
-  const [keyInput, setKeyInput] = useState(getGeminiApiKey());
-  const [keySaveToast, setKeySaveToast] = useState(false);
 
   // Resource Download Toast
   const [downloadToast, setDownloadToast] = useState(null);
@@ -441,14 +435,6 @@ Grounded in ITM University B.Tech CSE Curriculum
               title={isExamMode ? 'Exam Lock Active' : 'Simulate Exam Mode'}
             >
               {isExamMode ? <ShieldAlert className="w-5 h-5 animate-pulse text-red-400" /> : <ShieldCheck className="w-5 h-5" />}
-            </button>
-
-            <button
-              onClick={() => setKeyModalOpen(true)}
-              className="w-10 h-10 rounded-xl text-gray-400 hover:text-amber-400 hover:bg-white/10 flex items-center justify-center transition-all cursor-pointer"
-              title="Gemini API Key Settings"
-            >
-              <Key className="w-5 h-5" />
             </button>
           </nav>
         </div>
@@ -1747,89 +1733,6 @@ Grounded in ITM University B.Tech CSE Curriculum
                 </div>
               </>
             )}
-          </motion.div>
-        </div>
-      )}
-
-      {/* Gemini API Key Settings Modal */}
-      {keyModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/50 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-3xl p-6 max-w-md w-full border border-borderLight shadow-2xl space-y-4"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-amber-100 text-[#ED7D31] flex items-center justify-center">
-                  <Key className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-sans font-bold text-base text-charcoal">
-                    Gemini AI Model Key
-                  </h3>
-                  <p className="text-[11px] text-charcoal-muted">Active Socratic Academic Engine</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setKeyModalOpen(false)}
-                className="p-1 rounded-lg text-gray-400 hover:text-charcoal"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {keySaveToast && (
-              <div className="p-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-semibold flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                <span>Gemini API Key saved successfully!</span>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="block text-xs font-semibold text-charcoal">
-                Active API Key:
-              </label>
-              <input
-                type="password"
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                placeholder="Enter Gemini API key..."
-                className="w-full px-3.5 py-2.5 bg-stone-50 border border-borderLight rounded-xl text-xs text-charcoal focus:outline-none focus:ring-2 focus:ring-[#ED7D31]"
-              />
-              <p className="text-[11px] text-charcoal-muted leading-relaxed">
-                Loaded from environment or local storage. You can reset or update this anytime.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                onClick={() => {
-                  const defaultKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-                  setKeyInput(defaultKey);
-                  setGeminiApiKey(defaultKey);
-                  setKeySaveToast(true);
-                  setTimeout(() => setKeySaveToast(false), 2000);
-                }}
-                className="px-3 py-2 rounded-xl text-xs font-semibold text-charcoal-muted hover:text-charcoal bg-stone-100 transition-colors"
-              >
-                Reset Default Key
-              </button>
-              <button
-                onClick={() => {
-                  setGeminiApiKey(keyInput);
-                  setKeySaveToast(true);
-                  setTimeout(() => {
-                    setKeySaveToast(false);
-                    setKeyModalOpen(false);
-                  }, 1200);
-                }}
-                className="gold-button px-4 py-2 rounded-xl text-xs font-bold"
-              >
-                Save Key
-              </button>
-            </div>
           </motion.div>
         </div>
       )}
