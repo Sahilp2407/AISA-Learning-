@@ -41,11 +41,14 @@ export default class ErrorBoundary extends React.Component {
               <button
                 onClick={() => {
                   this.setState({ hasError: false, error: null });
-                  window.location.href = '/';
+                  try {
+                    localStorage.setItem('aisa_screen', 'dashboard');
+                  } catch (e) {}
+                  window.location.href = '/?screen=dashboard';
                 }}
                 className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
               >
-                Back to Home
+                Back to Dashboard
               </button>
             </div>
           </div>

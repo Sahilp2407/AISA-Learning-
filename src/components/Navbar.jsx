@@ -38,7 +38,15 @@ export default function Navbar({ currentScreen, onNavigate, user, onLogout }) {
         <div className="flex items-center justify-between">
           {/* Modern Brand Logo */}
           <button
-            onClick={() => onNavigate('landing')}
+            onClick={() => {
+              if (currentScreen === 'dashboard' || currentScreen === 'exam_hall') {
+                onNavigate('dashboard');
+              } else if (currentScreen === 'admin_dashboard') {
+                onNavigate('admin_dashboard');
+              } else {
+                onNavigate('landing');
+              }
+            }}
             className="flex items-center group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ED7D31] rounded-xl p-1 cursor-pointer"
           >
             <AisaLogo size="md" isDark={false} />

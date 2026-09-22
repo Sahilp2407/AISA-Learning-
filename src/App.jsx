@@ -21,7 +21,22 @@ import { logOut } from './firebase';
 
 export default function App() {
   // Screen state: 'landing' | 'login' | 'admin_login' | 'dashboard' | 'admin_dashboard' | 'exam_hall'
-  const [currentScreen, setCurrentScreen] = useState('landing');
+  const [currentScreen, setCurrentScreen] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlScreen = urlParams.get('screen');
+        if (urlScreen && ['dashboard', 'admin_dashboard', 'landing', 'login'].includes(urlScreen)) {
+          return urlScreen;
+        }
+        const saved = localStorage.getItem('aisa_screen');
+        if (saved && ['dashboard', 'admin_dashboard'].includes(saved)) {
+          return saved;
+        }
+      }
+    } catch (e) {}
+    return 'landing';
+  });
   const [activeExamPaper, setActiveExamPaper] = useState(UNIVERSITY_EXAMS_DATA[0]);
 
   // Ensure Light theme is permanently active
@@ -172,6 +187,9 @@ export default function App() {
   // Scroll to top smoothly when switching screens
   const handleNavigate = (screen) => {
     setCurrentScreen(screen);
+    try {
+      localStorage.setItem('aisa_screen', screen);
+    } catch (e) {}
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -192,6 +210,9 @@ export default function App() {
 
   const handleLogout = async () => {
     await logOut();
+    try {
+      localStorage.removeItem('aisa_screen');
+    } catch (e) {}
     handleNavigate('landing');
   };
 
