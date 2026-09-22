@@ -82,7 +82,8 @@ export default function DashboardPage({
   activeExamTiming, 
   currentTime = new Date(), 
   examLocks = [], 
-  onLogout 
+  onLogout,
+  onEnterExamHall
 }) {
   // Navigation step state: 'semesters' | 'subjects' | 'subject_detail'
   const [currentStep, setCurrentStep] = useState('semesters');
@@ -770,7 +771,13 @@ Grounded in ITM University B.Tech CSE Curriculum
 
                     <button
                       type="button"
-                      onClick={() => setExamModalOpen(true)}
+                      onClick={() => {
+                        if (onEnterExamHall) {
+                          onEnterExamHall(selectedExam);
+                        } else {
+                          setExamModalOpen(true);
+                        }
+                      }}
                       className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
                     >
                       <GraduationCap className="w-4 h-4 text-slate-950" />
@@ -1138,8 +1145,12 @@ Grounded in ITM University B.Tech CSE Curriculum
                             onClick={(e) => {
                               e.stopPropagation();
                               const matchedExam = UNIVERSITY_EXAMS_DATA.find(e => e.code === subj.code);
-                              setSelectedExam(matchedExam);
-                              setExamModalOpen(true);
+                              if (onEnterExamHall) {
+                                onEnterExamHall(matchedExam);
+                              } else {
+                                setSelectedExam(matchedExam);
+                                setExamModalOpen(true);
+                              }
                             }}
                             className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold border border-indigo-200 flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:scale-105"
                             title="Take Proctored Midterm Examination"
@@ -1215,8 +1226,12 @@ Grounded in ITM University B.Tech CSE Curriculum
                         type="button"
                         onClick={() => {
                           const matchedExam = UNIVERSITY_EXAMS_DATA.find(e => e.code === selectedSubject.code);
-                          setSelectedExam(matchedExam);
-                          setExamModalOpen(true);
+                          if (onEnterExamHall) {
+                            onEnterExamHall(matchedExam);
+                          } else {
+                            setSelectedExam(matchedExam);
+                            setExamModalOpen(true);
+                          }
                         }}
                         className="px-5 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white text-sm font-bold shadow-md shadow-indigo-500/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
                       >

@@ -7,6 +7,8 @@ import LoginPage from './components/LoginPage';
 import AdminLoginPage from './components/AdminLoginPage';
 import DashboardPage from './components/DashboardPage';
 import AdminDashboardPage from './components/AdminDashboardPage';
+import ExamHallPage from './components/ExamHallPage';
+import { UNIVERSITY_EXAMS_DATA } from './data/examPapersData';
 import { 
   getSavedExamLocks, 
   saveExamLocks, 
@@ -18,8 +20,9 @@ import {
 import { logOut } from './firebase';
 
 export default function App() {
-  // Screen state: 'landing' | 'login' | 'admin_login' | 'dashboard' | 'admin_dashboard'
+  // Screen state: 'landing' | 'login' | 'admin_login' | 'dashboard' | 'admin_dashboard' | 'exam_hall'
   const [currentScreen, setCurrentScreen] = useState('landing');
+  const [activeExamPaper, setActiveExamPaper] = useState(UNIVERSITY_EXAMS_DATA[0]);
 
   // Ensure Light theme is permanently active
   useEffect(() => {
@@ -182,6 +185,11 @@ export default function App() {
     handleNavigate('admin_dashboard');
   };
 
+  const handleLaunchExam = (examPaper) => {
+    setActiveExamPaper(examPaper || UNIVERSITY_EXAMS_DATA[0]);
+    handleNavigate('exam_hall');
+  };
+
   const handleLogout = async () => {
     await logOut();
     handleNavigate('landing');
@@ -284,6 +292,24 @@ export default function App() {
                 currentTime={currentTime}
                 examLocks={examLocks}
                 onLogout={handleLogout}
+                onEnterExamHall={handleLaunchExam}
+              />
+            </motion.div>
+          )}
+
+          {currentScreen === 'exam_hall' && (
+            <motion.div
+              key="exam_hall"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="w-full"
+            >
+              <ExamHallPage
+                exam={activeExamPaper}
+                studentUser={user}
+                onExitExam={() => handleNavigate('dashboard')}
               />
             </motion.div>
           )}

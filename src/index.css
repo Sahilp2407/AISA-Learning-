@@ -103,3 +103,30 @@
 .animate-float-tilt-right {
   animation: floatBadge2 5s ease-in-out 1s infinite;
 }
+
+/* Examination Lockdown & Anti-Cheat Styles */
+body.exam-lockdown-active {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+@media print {
+  body.exam-lockdown-active * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  body.exam-lockdown-active::after {
+    content: "⚠️ PROCTORED EXAMINATION SECURITY: Screen capture and document printing are strictly prohibited under the University Honor Guard Code. This attempt has been logged.";
+    display: block !important;
+    font-size: 20pt;
+    font-weight: 900;
+    color: #e11d48;
+    text-align: center;
+    padding: 120px 30px;
+    border: 4px dashed #e11d48;
+    margin: 50px auto;
+  }
+}
+
