@@ -61,6 +61,7 @@ import { SEMESTERS_DATA } from '../data/curriculumData';
 import { STUDENTS_DATA, FACULTY_DATA } from '../data/studentsData';
 import { AI_AUDIT_DATA } from '../data/aiAuditData';
 import { syncCurriculumToFirestore, fetchAllSubmissions } from '../services/assessmentService';
+import { fetchAllExamAttempts } from '../services/examService';
 import { 
   generateAIStudyNotes, 
   publishNewBroadcastNote, 
@@ -175,10 +176,11 @@ export default function AdminDashboardPage({
 
   // Firestore Cloud Quiz & Course Sync State
   const [allQuizSubmissions, setAllQuizSubmissions] = useState([]);
+  const [allExamAttempts, setAllExamAttempts] = useState([]);
   const [syncingCourses, setSyncingCourses] = useState(false);
   const [syncCoursesResult, setSyncCoursesResult] = useState(null);
 
-  // Load all quiz submissions from Firestore on mount
+  // Load all quiz and exam submissions from Firestore on mount
   React.useEffect(() => {
     let isMounted = true;
     fetchAllSubmissions()
@@ -186,6 +188,13 @@ export default function AdminDashboardPage({
         if (isMounted) setAllQuizSubmissions(subs);
       })
       .catch(err => console.warn('Failed to fetch all quiz submissions:', err));
+
+    fetchAllExamAttempts()
+      .then(attempts => {
+        if (isMounted) setAllExamAttempts(attempts);
+      })
+      .catch(err => console.warn('Failed to fetch all exam attempts:', err));
+
     return () => { isMounted = false; };
   }, []);
 
@@ -1759,6 +1768,135 @@ export default function AdminDashboardPage({
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* Live Proctored Examination Submissions & Grade Roster (Firestore 'exam_attempts') */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-indigo-800 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                        Cloud Firestore Synced
+                      </span>
+                      <span className="text-[11px] font-mono text-slate-500">exam_attempts</span>
+                    </div>
+                    <h3 className="font-sans text-lg font-black text-slate-900 mt-1 flex items-center gap-2">
+                      <GraduationCap className="w-5 h-5 text-indigo-600" />
+                      <span>Proctored University Examination Submissions ({allExamAttempts.length} Records)</span>
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Evaluated multi-format answer sheets (MCQs, Match the Following, Assertion & Reasoning) submitted by students.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fetchAllExamAttempts().then(att => setAllExamAttempts(att));
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer self-start sm:self-auto"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Refresh Roster</span>
+                  </button>
+                </div>
+
+                {allExamAttempts.length > 0 ? (
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200/80">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200 text-[10px]">
+                          <th className="py-3 px-4">Student</th>
+                          <th className="py-3 px-4">Course / Paper</th>
+                          <th className="py-3 px-4">Score / Max</th>
+                          <th className="py-3 px-4">Grade</th>
+                          <th className="py-3 px-4">Sectional Marks</th>
+                          <th className="py-3 px-4">Time Taken</th>
+                          <th className="py-3 px-4">Integrity Flags</th>
+                          <th className="py-3 px-4">Submitted At</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {allExamAttempts.map((att, idx) => (
+                          <tr key={att.id || idx} className="hover:bg-indigo-50/20 transition-colors">
+                            <td className="py-3 px-4">
+                              <p className="font-bold text-slate-900">{att.studentName}</p>
+                              <p className="text-[10px] text-slate-400 font-mono">{att.studentEmail}</p>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">
+                                {att.examCode || 'EXAM'}
+                              </span>
+                              <p className="text-[11px] text-slate-700 font-medium truncate max-w-[180px] mt-0.5">
+                                {att.examName}
+                              </p>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="font-mono font-black text-slate-900 text-sm">
+                                {att.totalMarksObtained} / {att.maxMarks || 30}
+                              </span>
+                              <span className="text-[10px] text-slate-400 block">
+                                {att.percentage}%
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2.5 py-1 rounded-full font-black text-xs inline-block ${
+                                att.letterGrade === 'A+' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                                att.letterGrade === 'A' ? 'bg-teal-100 text-teal-800 border border-teal-300' :
+                                att.letterGrade === 'B' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                                'bg-rose-100 text-rose-800 border border-rose-300'
+                              }`}>
+                                {att.letterGrade || 'A'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="space-y-0.5 text-[10px]">
+                                <span className="inline-block bg-slate-100 px-1.5 py-0.5 rounded font-mono mr-1">
+                                  MCQ: {att.sectionalScores?.secA || 0}/12
+                                </span>
+                                <span className="inline-block bg-slate-100 px-1.5 py-0.5 rounded font-mono mr-1">
+                                  Match: {att.sectionalScores?.secB || 0}/10
+                                </span>
+                                <span className="inline-block bg-slate-100 px-1.5 py-0.5 rounded font-mono">
+                                  Assert: {att.sectionalScores?.secC || 0}/8
+                                </span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 font-mono text-slate-600">
+                              {Math.floor((att.timeTakenSeconds || 0) / 60)}m {(att.timeTakenSeconds || 0) % 60}s
+                            </td>
+                            <td className="py-3 px-4">
+                              {(att.tabSwitchViolations || 0) > 0 ? (
+                                <span className="px-2 py-0.5 rounded font-bold text-rose-700 bg-rose-50 border border-rose-200 text-[10px] flex items-center gap-1 w-fit">
+                                  <AlertTriangle className="w-3 h-3 text-rose-600" />
+                                  {att.tabSwitchViolations} Tab Switch(es)
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 text-[10px] flex items-center gap-1 w-fit">
+                                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                  Clean (0 Flags)
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 font-mono text-[10px] text-slate-500">
+                              {att.submittedAtFormatted || 'Recent'}
+                              <span className="block text-[9px] text-slate-400">
+                                Doc: {att.id?.slice(0, 10)}...
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center space-y-1">
+                    <p className="text-xs font-bold text-slate-700">No Proctored Exam Submissions Recorded Yet</p>
+                    <p className="text-[11px] text-slate-500">
+                      When students enter the Examination Hall from their dashboard and complete their exams, their multi-format answer keys, section marks, and proctor logs will automatically appear here in real-time.
+                    </p>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -3381,6 +3519,67 @@ export default function AdminDashboardPage({
                   ) : (
                     <p className="text-[11px] text-slate-500 p-3 rounded-xl bg-slate-50 border border-slate-100">
                       No cloud assessment submissions recorded yet for {selectedStudentModal.name}. Any quizzes completed via the student portal will instantly sync here from Cloud Firestore.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Live Firestore Proctored Exam Attempts */}
+            {(() => {
+              const studentExams = allExamAttempts.filter(e => e.studentEmail === selectedStudentModal.email);
+              return (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-indigo-600" />
+                      Proctored Exam Reports & Submissions ({studentExams.length})
+                    </h4>
+                    <span className="text-[10px] font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                      Firestore: exam_attempts
+                    </span>
+                  </div>
+
+                  {studentExams.length > 0 ? (
+                    <div className="space-y-2">
+                      {studentExams.map((ex, eIdx) => (
+                        <div key={ex.id || eIdx} className="p-3.5 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex items-center justify-between text-xs">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-indigo-800 bg-white px-2 py-0.5 rounded border border-indigo-200 text-[10px]">
+                                {ex.examCode}
+                              </span>
+                              <strong className="text-slate-900">{ex.examName}</strong>
+                              <span className="text-slate-500 font-medium">({ex.percentage}%)</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                              <span>Sec A: {ex.sectionalScores?.secA || 0}/12</span>
+                              <span>Sec B: {ex.sectionalScores?.secB || 0}/10</span>
+                              <span>Sec C: {ex.sectionalScores?.secC || 0}/8</span>
+                              <span>• Flags: {ex.tabSwitchViolations || 0}</span>
+                              <span className="font-mono">Doc: {ex.id?.slice(0, 8)}...</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right flex flex-col items-end gap-1">
+                            <span className={`px-2.5 py-0.5 rounded-full font-black text-xs ${
+                              ex.letterGrade === 'A+' ? 'bg-emerald-100 text-emerald-800' :
+                              ex.letterGrade === 'A' ? 'bg-teal-100 text-teal-800' :
+                              ex.letterGrade === 'B' ? 'bg-blue-100 text-blue-800' :
+                              'bg-rose-100 text-rose-800'
+                            }`}>
+                              Grade {ex.letterGrade || 'A'} ({ex.totalMarksObtained}/{ex.maxMarks || 30})
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {ex.submittedAtFormatted || 'Recent'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-slate-500 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      No proctored exam attempts logged yet for {selectedStudentModal.name}. When {selectedStudentModal.name} takes an exam in the student portal, their multi-format evaluation and honor guard integrity log will automatically record here.
                     </p>
                   )}
                 </div>

@@ -71,6 +71,9 @@ import {
 } from '../services/notesBroadcastService';
 import SubjectQuizModal from './SubjectQuizModal';
 import { fetchStudentSubmissions } from '../services/assessmentService';
+import ExaminationModal from './ExaminationModal';
+import { UNIVERSITY_EXAMS_DATA } from '../data/examPapersData';
+import { fetchStudentExamAttempts } from '../services/examService';
 
 export default function DashboardPage({ 
   user, 
@@ -160,6 +163,11 @@ export default function DashboardPage({
   const [quizSubject, setQuizSubject] = useState(null);
   const [studentQuizSubmissions, setStudentQuizSubmissions] = useState([]);
 
+  // University Proctored Examination State (Firestore 'exam_attempts')
+  const [examModalOpen, setExamModalOpen] = useState(false);
+  const [selectedExam, setSelectedExam] = useState(UNIVERSITY_EXAMS_DATA[0]);
+  const [studentExamAttempts, setStudentExamAttempts] = useState([]);
+
   // Load student's Firestore quiz attempts on load
   useEffect(() => {
     let isMounted = true;
@@ -168,6 +176,17 @@ export default function DashboardPage({
         if (isMounted) setStudentQuizSubmissions(subs);
       })
       .catch(err => console.warn('Failed to fetch quiz submissions:', err));
+    return () => { isMounted = false; };
+  }, [user?.email]);
+
+  // Load student's Firestore examination attempts on load
+  useEffect(() => {
+    let isMounted = true;
+    fetchStudentExamAttempts(user?.email || 'aditi.sharma@univ.edu')
+      .then(attempts => {
+        if (isMounted) setStudentExamAttempts(attempts);
+      })
+      .catch(err => console.warn('Failed to fetch exam attempts:', err));
     return () => { isMounted = false; };
   }, [user?.email]);
 
@@ -699,6 +718,148 @@ Grounded in ITM University B.Tech CSE Curriculum
                 </span>
               </div>
 
+              {/* Proctored University Examination Hall (Firestore 'exam_attempts') */}
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-xl relative overflow-hidden space-y-5">
+                {/* Background ambient lighting */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+                <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-violet-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 bg-amber-400/20 border border-amber-400/40 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <GraduationCap className="w-3 h-3" />
+                        Official Examination Hall
+                      </span>
+                      <span className="text-[10px] font-bold text-indigo-300 bg-indigo-900/60 border border-indigo-700/50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        Anti-Cheating Honor Guard
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-300 bg-white/10 px-2 py-0.5 rounded">
+                        Firestore: exam_attempts
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                      <span>🏛️ Apex Proctored Midterm Examination Portal</span>
+                    </h3>
+
+                    <p className="text-xs sm:text-sm text-indigo-200/80 max-w-2xl leading-relaxed">
+                      Multi-format evaluation platform: <strong>Section A (MCQs)</strong> · <strong>Section B (Interactive Match the Following)</strong> · <strong>Section C (Assertion & Reasoning)</strong>. Automatically graded with authenticated Report Card generation.
+                    </p>
+                  </div>
+
+                  {/* Quick Paper Switcher & Launch Button */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 self-start lg:self-center">
+                    <div className="flex bg-slate-800/80 p-1 rounded-2xl border border-indigo-500/30">
+                      {UNIVERSITY_EXAMS_DATA.map((ex) => (
+                        <button
+                          key={ex.id}
+                          type="button"
+                          onClick={() => setSelectedExam(ex)}
+                          className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            selectedExam.id === ex.id
+                              ? 'bg-indigo-600 text-white shadow-md'
+                              : 'text-indigo-200/70 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {ex.code} ({ex.durationMinutes}m)
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setExamModalOpen(true)}
+                      className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                    >
+                      <GraduationCap className="w-4 h-4 text-slate-950" />
+                      <span>Enter Examination Hall</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Active Selected Exam Details Bar */}
+                <div className="relative z-10 p-3.5 rounded-2xl bg-white/5 border border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                      {selectedExam.code}
+                    </span>
+                    <span className="font-extrabold text-white">{selectedExam.name}</span>
+                    <span className="text-slate-400 hidden sm:inline">· {selectedExam.title}</span>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-[11px] text-indigo-200">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                      {selectedExam.durationMinutes} Minutes
+                    </span>
+                    <span className="flex items-center gap-1 font-bold text-emerald-400">
+                      <Award className="w-3.5 h-3.5" />
+                      Total {selectedExam.totalMarks} Marks (Pass: {selectedExam.passingMarks})
+                    </span>
+                    <span className="hidden md:inline text-indigo-300/70">
+                      3 Sections · Instant Report Card
+                    </span>
+                  </div>
+                </div>
+
+                {/* Student's Past Exam Attempts & Report Cards */}
+                {studentExamAttempts.length > 0 && (
+                  <div className="relative z-10 pt-2 space-y-2 border-t border-white/10">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-extrabold text-indigo-200 flex items-center gap-1.5">
+                        <Award className="w-4 h-4 text-amber-400" />
+                        My Proctored Exam Records ({studentExamAttempts.length} Completed)
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Synced to Firestore
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {studentExamAttempts.map((attempt, idx) => (
+                        <div 
+                          key={attempt.id || idx}
+                          className="p-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 transition-colors space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-mono font-black text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded border border-amber-400/30">
+                              {attempt.examCode || 'EXAM'}
+                            </span>
+                            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full ${
+                              attempt.letterGrade === 'A+' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' :
+                              attempt.letterGrade === 'A' ? 'bg-teal-500/20 text-teal-300 border border-teal-400/30' :
+                              attempt.letterGrade === 'B' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-400/30' :
+                              'bg-rose-500/20 text-rose-300 border border-rose-400/30'
+                            }`}>
+                              Grade: {attempt.letterGrade || 'A'} · {attempt.percentage}%
+                            </span>
+                          </div>
+
+                          <div className="flex items-baseline justify-between">
+                            <p className="text-xs font-bold text-white truncate max-w-[180px]">
+                              {attempt.examName || attempt.courseName}
+                            </p>
+                            <p className="text-sm font-black text-amber-300">
+                              {attempt.totalMarksObtained}/{attempt.maxMarks || 30}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-white/5">
+                            <span className="font-mono truncate max-w-[140px]">
+                              {attempt.isCloud ? '☁️ Cloud Verified' : '💾 Local Synced'}
+                            </span>
+                            <span>{attempt.submittedAtFormatted || 'Recent'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Cloud Quiz & Assessment Records (Firestore Synced) */}
               <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-emerald-50/80 border border-emerald-200/90 shadow-xs space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -971,6 +1132,23 @@ Grounded in ITM University B.Tech CSE Curriculum
                       </div>
 
                       <div className="flex items-center gap-2">
+                        {UNIVERSITY_EXAMS_DATA.find(e => e.code === subj.code) && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const matchedExam = UNIVERSITY_EXAMS_DATA.find(e => e.code === subj.code);
+                              setSelectedExam(matchedExam);
+                              setExamModalOpen(true);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold border border-indigo-200 flex items-center gap-1 transition-all cursor-pointer shadow-2xs hover:scale-105"
+                            title="Take Proctored Midterm Examination"
+                          >
+                            <GraduationCap className="w-3 h-3 text-indigo-600" />
+                            <span>Exam</span>
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1032,6 +1210,21 @@ Grounded in ITM University B.Tech CSE Curriculum
 
                   {/* Assessment & Socratic AI Triggers */}
                   <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
+                    {UNIVERSITY_EXAMS_DATA.find(e => e.code === selectedSubject.code) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const matchedExam = UNIVERSITY_EXAMS_DATA.find(e => e.code === selectedSubject.code);
+                          setSelectedExam(matchedExam);
+                          setExamModalOpen(true);
+                        }}
+                        className="px-5 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-500 hover:to-violet-600 text-white text-sm font-bold shadow-md shadow-indigo-500/20 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                      >
+                        <GraduationCap className="w-4 h-4 text-white" />
+                        <span>Enter Proctored Exam ({UNIVERSITY_EXAMS_DATA.find(e => e.code === selectedSubject.code)?.durationMinutes}m)</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => {
@@ -1764,6 +1957,22 @@ Grounded in ITM University B.Tech CSE Curriculum
           if (res?.data) {
             setStudentQuizSubmissions(prev => [
               { ...res.data, id: res.id, isCloud: res.isCloud, submittedAtStr: 'Just now' },
+              ...prev
+            ]);
+          }
+        }}
+      />
+
+      {/* Proctored University Examination Modal & Report Card */}
+      <ExaminationModal
+        isOpen={examModalOpen}
+        onClose={() => setExamModalOpen(false)}
+        exam={selectedExam}
+        studentUser={user}
+        onAttemptCompleted={(res) => {
+          if (res?.data) {
+            setStudentExamAttempts(prev => [
+              { ...res.data, id: res.id, isCloud: res.isCloud, submittedAtFormatted: 'Just now' },
               ...prev
             ]);
           }
