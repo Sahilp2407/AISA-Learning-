@@ -56,7 +56,8 @@ import {
   Inbox,
   Copy,
   Database,
-  ArrowLeft
+  ArrowLeft,
+  RotateCcw
 } from 'lucide-react';
 import { SEMESTERS_DATA } from '../data/curriculumData';
 import { STUDENTS_DATA, FACULTY_DATA } from '../data/studentsData';
