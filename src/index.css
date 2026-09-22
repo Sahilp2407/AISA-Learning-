@@ -130,14 +130,14 @@ body.exam-lockdown-active {
   }
 }
 
-/* Synchronous Censor on Blur & Shield Activation */
+/* Synchronous Censor on Blur, Fullscreen Missing & Shield Activation */
+body.exam-lockdown-active.fullscreen-missing #exam-content-container,
 body.exam-lockdown-active.window-blurred #exam-content-container,
 body.exam-lockdown-active.shield-active #exam-content-container {
-  filter: blur(80px) !important;
-  opacity: 0 !important;
+  display: none !important;
   visibility: hidden !important;
+  opacity: 0 !important;
+  filter: blur(80px) !important;
   pointer-events: none !important;
   transition: none !important;
 }
-
-

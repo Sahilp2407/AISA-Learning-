@@ -57,6 +57,7 @@ export default function ExamHallPage({
   const [isWindowBlurred, setIsWindowBlurred] = useState(false);
   const [shieldReason, setShieldReason] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSplitScreenDetected, setIsSplitScreenDetected] = useState(false);
   const [showTabSwitchModal, setShowTabSwitchModal] = useState(false);
 
   // Submission & Results State
@@ -108,29 +109,53 @@ export default function ExamHallPage({
     }, 2800);
   };
 
-  // Full-Screen change listener
+  // Full-Screen & Viewport dimension change listener (Blocks Edge Copilot, Chrome Side Panel & Split Screen)
   useEffect(() => {
     const handleFullscreenChange = () => {
       const active = Boolean(document.fullscreenElement);
       setIsFullscreen(active);
       if (!active && !isSubmitted) {
-        showViolationToast('⚠️ You exited Full-Screen Mode. Please return to full-screen to maintain test integrity.');
+        document.body.classList.add('fullscreen-missing');
+        showViolationToast('⚠️ Full-Screen exited! Examination canvas is locked to prevent side-panel AI.');
+      } else {
+        document.body.classList.remove('fullscreen-missing');
       }
     };
 
+    const handleResize = () => {
+      // Check if window is narrow due to Edge sidebar, Chrome side panel, or split-screen
+      const isNarrow = 
+        !document.fullscreenElement && 
+        (window.innerWidth < (window.screen.availWidth - 80) || 
+         window.innerHeight < (window.screen.availHeight - 120));
+      setIsSplitScreenDetected(Boolean(isNarrow));
+    };
+
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    window.addEventListener('resize', handleResize);
+    
+    // Initial check on mount
+    handleFullscreenChange();
+    handleResize();
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [isSubmitted]);
 
-  const toggleFullscreen = async () => {
+  const requestFullscreenLock = async () => {
     try {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
       }
+      setIsFullscreen(true);
+      setIsWindowBlurred(false);
+      setIsSplitScreenDetected(false);
+      document.body.classList.remove('fullscreen-missing', 'window-blurred');
     } catch (e) {
-      console.warn('Fullscreen request failed:', e);
+      console.warn('Fullscreen request rejected by browser:', e);
+      showViolationToast('⚠️ Please click "Allow Fullscreen" in your browser.');
     }
   };
 
@@ -595,6 +620,40 @@ export default function ExamHallPage({
         )}
       </AnimatePresence>
 
+      {/* Mandatory Full-Screen & Anti-Sidebar / Anti-Split-Screen Lockdown Overlay */}
+      {(!isFullscreen || isSplitScreenDetected) && !isSubmitted && (
+        <div className="fixed inset-0 z-[999999] bg-[#121110] flex flex-col items-center justify-center p-6 text-center text-white select-none">
+          <div className="w-20 h-20 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-[#ED7D31] flex items-center justify-center mb-5 animate-pulse shadow-2xl">
+            <Maximize2 className="w-10 h-10" />
+          </div>
+          <span className="text-[11px] font-black uppercase tracking-widest text-[#ED7D31] bg-amber-500/10 border border-amber-500/30 px-3.5 py-1 rounded-full mb-3 font-mono">
+            Anti-AI & Side-Panel Proctor Lockdown
+          </span>
+          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight max-w-md">
+            Full-Screen Mode Required
+          </h2>
+          <p className="text-sm text-stone-300 max-w-lg mt-3 leading-relaxed font-medium">
+            Side panels (Microsoft Copilot, Chrome Side Panel), split-screen windows, and floating AI assistants are strictly prohibited during the examination. Question access is locked until you enter dedicated Full-Screen mode.
+          </p>
+
+          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+            <button
+              type="button"
+              onClick={requestFullscreenLock}
+              className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#ED7D31] to-[#E06E22] hover:brightness-110 text-white font-extrabold text-sm shadow-xl shadow-orange-500/30 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+            >
+              <Maximize2 className="w-5 h-5" />
+              <span>Enter Full-Screen to Unlock Exam</span>
+            </button>
+          </div>
+
+          <div className="mt-6 p-3 rounded-xl bg-stone-900 border border-stone-800 text-[11px] text-stone-400 font-mono flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0" />
+            <span>Exiting full-screen or docking side panels will immediately lock question access.</span>
+          </div>
+        </div>
+      )}
+
       {/* Security Toast Notification */}
       <AnimatePresence>
         {securityToast && (
@@ -1004,7 +1063,7 @@ export default function ExamHallPage({
         <div 
           id="exam-content-container" 
           className={`flex-1 flex flex-col h-screen bg-[#FDFCF7] ${
-            isWindowBlurred || isScreenShieldActive ? 'opacity-0 filter blur-3xl pointer-events-none select-none invisible' : ''
+            !isFullscreen || isSplitScreenDetected || isWindowBlurred || isScreenShieldActive ? 'opacity-0 filter blur-3xl pointer-events-none select-none invisible' : ''
           }`}
         >
           {/* Top Proctoring & Security Bar */}
