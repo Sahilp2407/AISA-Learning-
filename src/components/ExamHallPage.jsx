@@ -93,6 +93,7 @@ export default function ExamHallPage({
     setShieldReason(reason);
     setIsScreenShieldActive(true);
     setSecurityStrikes(prev => prev + 1);
+    document.body.classList.add('shield-active');
     
     // Clear clipboard content immediately
     try {
@@ -103,6 +104,7 @@ export default function ExamHallPage({
 
     setTimeout(() => {
       setIsScreenShieldActive(false);
+      document.body.classList.remove('shield-active');
     }, 2800);
   };
 
@@ -205,7 +207,16 @@ export default function ExamHallPage({
       const code = e.code;
       const isCtrlOrMeta = e.ctrlKey || e.metaKey;
 
-      // A. All PrintScreen variants (Windows, Linux, External Keyboards)
+      // A. Screenshot Hotkey Pre-emption (Mac Cmd+Shift, Windows Win/Ctrl+Shift, Alt+Shift)
+      // Intercepts immediately when modifier combos are held down BEFORE 3, 4, 5, or S is even hit!
+      if ((isCtrlOrMeta && e.shiftKey) || (e.altKey && e.shiftKey)) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerScreenShield('📸 Screenshot / Screen Capture Hotkey Intercepted & Blocked!');
+        return false;
+      }
+
+      // B. All PrintScreen variants (Windows, Linux, External Keyboards)
       const isPrintScreen = 
         key === 'PrintScreen' || 
         code === 'PrintScreen' || 
@@ -220,41 +231,7 @@ export default function ExamHallPage({
         return false;
       }
 
-      // B. Mac Screenshot Shortcuts:
-      // Cmd + Shift + 3 (Full Screen)
-      // Cmd + Shift + 4 (Selection Crosshair)
-      // Cmd + Shift + 5 (Screen Capture Bar)
-      // Cmd + Shift + 6 (Touch Bar Screenshot)
-      // Note: On Mac, Shift + 3/4/5/6 produce '#', '$', '%', '^' in e.key; e.code produces 'Digit3', etc.
-      const isMacScreenshot = 
-        isCtrlOrMeta && 
-        e.shiftKey && 
-        (
-          ['Digit3', 'Digit4', 'Digit5', 'Digit6'].includes(code) || 
-          ['3', '4', '5', '6', '#', '$', '%', '^'].includes(key)
-        );
-
-      if (isMacScreenshot) {
-        e.preventDefault();
-        e.stopPropagation();
-        triggerScreenShield('📸 Mac Screen Capture Shortcut (Cmd+Shift+3/4/5) Blocked!');
-        return false;
-      }
-
-      // C. Windows Snipping Tool: Win + Shift + S or Ctrl + Shift + S
-      const isSnippingTool = 
-        e.shiftKey && 
-        (isCtrlOrMeta || e.altKey) && 
-        (key === 's' || key === 'S' || code === 'KeyS');
-
-      if (isSnippingTool) {
-        e.preventDefault();
-        e.stopPropagation();
-        triggerScreenShield('📸 Snipping Tool Shortcut (Shift+S) Blocked!');
-        return false;
-      }
-
-      // D. Windows Game Bar / Screen Recording shortcuts: Win + Alt + R / G
+      // C. Windows Game Bar / Screen Recording shortcuts: Win + Alt + R / G
       if (e.altKey && isCtrlOrMeta && (key === 'g' || key === 'G' || key === 'r' || key === 'R' || code === 'KeyG' || code === 'KeyR')) {
         e.preventDefault();
         e.stopPropagation();
@@ -262,7 +239,7 @@ export default function ExamHallPage({
         return false;
       }
 
-      // E. Print Document: Ctrl + P / Cmd + P
+      // D. Print Document: Ctrl + P / Cmd + P
       if (isCtrlOrMeta && (key === 'p' || key === 'P' || code === 'KeyP')) {
         e.preventDefault();
         e.stopPropagation();
@@ -270,7 +247,7 @@ export default function ExamHallPage({
         return false;
       }
 
-      // F. Save Webpage: Ctrl + S / Cmd + S
+      // E. Save Webpage: Ctrl + S / Cmd + S
       if (isCtrlOrMeta && (key === 's' || key === 'S' || code === 'KeyS') && !e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
@@ -278,7 +255,7 @@ export default function ExamHallPage({
         return false;
       }
 
-      // G. Copy / Paste / Cut / Select All: Ctrl + C, V, X, A
+      // F. Copy / Paste / Cut / Select All: Ctrl + C, V, X, A
       if (isCtrlOrMeta && ['c', 'v', 'x', 'a', 'C', 'V', 'X', 'A'].includes(key)) {
         e.preventDefault();
         e.stopPropagation();
@@ -286,7 +263,7 @@ export default function ExamHallPage({
         return false;
       }
 
-      // H. Inspect Element / DevTools: F12, Ctrl+Shift+I, Cmd+Opt+I, Ctrl+Shift+J, Ctrl+Shift+C
+      // G. Inspect Element / DevTools: F12, Ctrl+Shift+I, Cmd+Opt+I, Ctrl+Shift+J, Ctrl+Shift+C
       if (key === 'F12' || code === 'F12') {
         e.preventDefault();
         showViolationToast('🔒 Developer Tools inspection disabled.');
@@ -309,6 +286,7 @@ export default function ExamHallPage({
     // 5. Anti-Cheating: Tab Switch & Minimize Detection (visibilitychange)
     const handleVisibilityChange = () => {
       if (document.hidden) {
+        document.body.classList.add('window-blurred');
         setTabSwitchViolations(prev => {
           const count = prev + 1;
           setSecurityStrikes(s => s + 1);
@@ -320,6 +298,7 @@ export default function ExamHallPage({
 
     // 6. Window Blur Detection (External screenshot tools, Snipping Tool, floating widgets)
     const handleWindowBlur = () => {
+      document.body.classList.add('window-blurred');
       setIsWindowBlurred(true);
       // Immediately clear clipboard if any external tool attempted to capture
       try {
@@ -331,6 +310,7 @@ export default function ExamHallPage({
     };
 
     const handleWindowFocus = () => {
+      document.body.classList.remove('window-blurred');
       setIsWindowBlurred(false);
     };
 
@@ -347,7 +327,7 @@ export default function ExamHallPage({
     window.addEventListener('focus', handleWindowFocus);
 
     return () => {
-      document.body.classList.remove('exam-lockdown-active');
+      document.body.classList.remove('exam-lockdown-active', 'window-blurred', 'shield-active');
       window.removeEventListener('contextmenu', handleContextMenu);
       window.removeEventListener('copy', handleCopy);
       window.removeEventListener('cut', handleCut);
@@ -568,7 +548,7 @@ export default function ExamHallPage({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-rose-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 text-center text-white select-none pointer-events-auto"
+            className="fixed inset-0 z-[999999] bg-rose-950 flex flex-col items-center justify-center p-6 text-center text-white select-none pointer-events-auto"
           >
             <div className="w-20 h-20 rounded-3xl bg-rose-600/30 border border-rose-500/50 flex items-center justify-center mb-4 animate-pulse">
               <EyeOff className="w-10 h-10 text-rose-300" />
@@ -593,14 +573,17 @@ export default function ExamHallPage({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-stone-900/90 backdrop-blur-3xl flex flex-col items-center justify-center p-6 text-center text-white select-none cursor-pointer"
-            onClick={() => setIsWindowBlurred(false)}
+            className="fixed inset-0 z-[999999] bg-[#1a1612] flex flex-col items-center justify-center p-6 text-center text-white select-none cursor-pointer"
+            onClick={() => {
+              document.body.classList.remove('window-blurred');
+              setIsWindowBlurred(false);
+            }}
           >
             <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-[#ED7D31] flex items-center justify-center mb-4">
               <EyeOff className="w-8 h-8" />
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              EXAMINATION CANVAS CENSOR ACTIVE
+              🔒 PROCTORED EXAM CANVAS CENSORED
             </h2>
             <p className="text-sm text-stone-300 max-w-md mt-2 font-medium">
               Window focus lost (screenshot utility, snipping tool, or application switch detected). Question canvas is censored for academic integrity.
@@ -1018,7 +1001,12 @@ export default function ExamHallPage({
         </div>
       ) : (
         /* ================= ACTIVE EXAMINATION WORKSPACE ================= */
-        <div className="flex-1 flex flex-col h-screen bg-[#FDFCF7]">
+        <div 
+          id="exam-content-container" 
+          className={`flex-1 flex flex-col h-screen bg-[#FDFCF7] ${
+            isWindowBlurred || isScreenShieldActive ? 'opacity-0 filter blur-3xl pointer-events-none select-none invisible' : ''
+          }`}
+        >
           {/* Top Proctoring & Security Bar */}
           <header className="h-16 bg-white/95 border-b border-[#E8DFC8] px-4 sm:px-6 flex items-center justify-between gap-4 z-20 backdrop-blur-md shadow-2xs">
             <div className="flex items-center gap-3">

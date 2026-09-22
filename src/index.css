@@ -130,3 +130,14 @@ body.exam-lockdown-active {
   }
 }
 
+/* Synchronous Censor on Blur & Shield Activation */
+body.exam-lockdown-active.window-blurred #exam-content-container,
+body.exam-lockdown-active.shield-active #exam-content-container {
+  filter: blur(80px) !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+
