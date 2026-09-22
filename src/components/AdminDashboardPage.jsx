@@ -55,7 +55,8 @@ import {
   Share2,
   Inbox,
   Copy,
-  Database
+  Database,
+  ArrowLeft
 } from 'lucide-react';
 import { SEMESTERS_DATA } from '../data/curriculumData';
 import { STUDENTS_DATA, FACULTY_DATA } from '../data/studentsData';
@@ -126,7 +127,8 @@ export default function AdminDashboardPage({
   onDeleteExamLock, 
   onEndAllLockouts,
   onInstantDemoLock,
-  onLogout 
+  onLogout,
+  onBack
 }) {
   const [activeTab, setActiveTab] = useState('students'); // 'students' | 'exam_locks' | 'audit_flags' | 'curriculum'
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -793,6 +795,17 @@ export default function AdminDashboardPage({
           )}
 
           <button
+            onClick={onBack || onLogout}
+            title="Back to Landing Page"
+            className={`w-full flex items-center ${
+              sidebarCollapsed ? 'justify-center px-0' : 'justify-start px-3'
+            } py-2.5 rounded-2xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/80 transition-all cursor-pointer`}
+          >
+            <ArrowLeft className="w-4 h-4 flex-shrink-0 text-[#ED7D31]" />
+            {!sidebarCollapsed && <span className="ml-2.5">Back to Home</span>}
+          </button>
+
+          <button
             onClick={onLogout}
             title="Logout Portal"
             className={`w-full flex items-center ${
@@ -811,6 +824,17 @@ export default function AdminDashboardPage({
         {/* Top Sticky Header */}
         <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-6 sm:px-8 py-3.5 flex items-center justify-between gap-4 shadow-xs">
           <div className="flex items-center gap-3">
+            {/* Back to Home Button */}
+            <button
+              type="button"
+              onClick={onBack}
+              className="p-2 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold shadow-xs group"
+              title="Back to Landing Page"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#ED7D31] group-hover:-translate-x-0.5 transition-transform" />
+              <span className="hidden sm:inline">Back to Home</span>
+            </button>
+
             {/* Quick Toggle Button in Header */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}

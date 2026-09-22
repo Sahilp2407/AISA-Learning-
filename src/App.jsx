@@ -314,6 +314,7 @@ export default function App() {
                 examLocks={examLocks}
                 onLogout={handleLogout}
                 onEnterExamHall={handleLaunchExam}
+                onBack={() => handleNavigate('landing')}
               />
             </motion.div>
           )}
@@ -354,6 +355,7 @@ export default function App() {
                 onEndAllLockouts={handleEndAllLockouts}
                 onInstantDemoLock={handleInstantDemoLock}
                 onLogout={handleLogout}
+                onBack={() => handleNavigate('landing')}
               />
             </motion.div>
           )}

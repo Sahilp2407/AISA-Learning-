@@ -12,7 +12,8 @@ import {
   ChevronRight, 
   Bookmark, 
   Send, 
-  ArrowRight, 
+  ArrowRight,
+  ArrowLeft,
   Printer, 
   GraduationCap, 
   Link as LinkIcon, 
@@ -679,6 +680,14 @@ export default function ExamHallPage({
               <Maximize2 className="w-5 h-5" />
               <span>Enter Full-Screen to Unlock Exam</span>
             </button>
+            <button
+              type="button"
+              onClick={onExitExam}
+              className="px-6 py-3.5 rounded-2xl bg-stone-800/90 hover:bg-stone-700 text-stone-300 hover:text-white font-bold text-sm border border-stone-700 flex items-center gap-2 cursor-pointer transition-all"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#ED7D31]" />
+              <span>Back to Dashboard</span>
+            </button>
           </div>
 
           <div className="mt-6 p-3 rounded-xl bg-stone-900 border border-stone-800 text-[11px] text-stone-400 font-mono flex items-center gap-2">
@@ -1160,10 +1169,11 @@ export default function ExamHallPage({
               <button
                 type="button"
                 onClick={handleQuitExam}
-                className="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 hover:border-rose-200 transition-colors cursor-pointer text-xs font-bold"
-                title="Exit Examination"
+                className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-700 hover:text-rose-700 border border-stone-200 hover:border-rose-200 transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs group"
+                title="Back to Student Dashboard"
               >
-                Exit
+                <ArrowLeft className="w-3.5 h-3.5 text-stone-500 group-hover:text-rose-600 group-hover:-translate-x-0.5 transition-transform" />
+                <span>Back to Dashboard</span>
               </button>
             </div>
           </header>

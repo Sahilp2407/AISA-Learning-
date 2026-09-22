@@ -83,7 +83,8 @@ export default function DashboardPage({
   currentTime = new Date(), 
   examLocks = [], 
   onLogout,
-  onEnterExamHall
+  onEnterExamHall,
+  onBack
 }) {
   // Navigation step state: 'semesters' | 'subjects' | 'subject_detail'
   const [currentStep, setCurrentStep] = useState('semesters');
@@ -472,6 +473,14 @@ Grounded in ITM University B.Tech CSE Curriculum
           </div>
 
           <button
+            onClick={onBack || onLogout}
+            className="w-10 h-10 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors cursor-pointer"
+            title="Back to Home Page"
+          >
+            <ArrowLeft className="w-4 h-4 text-[#ED7D31]" />
+          </button>
+
+          <button
             onClick={onLogout}
             className="w-10 h-10 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors cursor-pointer"
             title="Log Out"
@@ -534,8 +543,39 @@ Grounded in ITM University B.Tech CSE Curriculum
             </div>
           )}
 
-          {/* Breadcrumbs Navigation */}
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-charcoal truncate">
+          {/* Back Button & Breadcrumbs Navigation */}
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-charcoal truncate">
+            {/* Context-aware Universal Back Button */}
+            <button
+              type="button"
+              onClick={() => {
+                if (currentStep === 'subject_detail') {
+                  setCurrentStep('subjects');
+                } else if (currentStep === 'subjects') {
+                  setCurrentStep('semesters');
+                } else if (currentStep === 'faculty_notes') {
+                  setCurrentStep('semesters');
+                } else if (onBack) {
+                  onBack();
+                }
+              }}
+              className="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200/90 text-charcoal font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer border border-stone-200/80 hover:border-stone-300 shrink-0 group"
+              title={
+                currentStep === 'subject_detail'
+                  ? 'Back to Subjects'
+                  : currentStep === 'subjects'
+                  ? 'Back to Semesters'
+                  : currentStep === 'faculty_notes'
+                  ? 'Back to Dashboard'
+                  : 'Back to Home Page'
+              }
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-[#ED7D31] group-hover:-translate-x-0.5 transition-transform" />
+              <span className="font-extrabold text-xs">Back</span>
+            </button>
+
+            <div className="h-4 w-px bg-stone-200 shrink-0" />
+
             <button
               onClick={() => setCurrentStep('semesters')}
               className="text-charcoal-muted hover:text-charcoal flex items-center gap-1.5 transition-colors cursor-pointer"
