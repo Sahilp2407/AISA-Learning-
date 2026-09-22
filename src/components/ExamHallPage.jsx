@@ -159,6 +159,19 @@ export default function ExamHallPage({
     }
   };
 
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await requestFullscreenLock();
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (e) {
+      console.warn('Fullscreen toggle failed:', e);
+    }
+  };
+
   // ================= STRICT PROCTORING & ANTI-CHEATING ENGINE =================
   useEffect(() => {
     if (isSubmitted) return;
