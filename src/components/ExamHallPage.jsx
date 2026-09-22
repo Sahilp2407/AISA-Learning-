@@ -500,6 +500,27 @@ export default function ExamHallPage({
     const nextIdx = currentGlobalQuestion.globalIndex + 1;
     if (nextIdx <= allQuestions.length) {
       handleNavigateQuestion(nextIdx);
+    } else {
+      // Reached end of examination paper -> open final submission modal
+      setShowConfirmation(true);
+    }
+  };
+
+  const safeExit = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch (e) {}
+    document.body.classList.remove('exam-lockdown-active', 'window-blurred', 'shield-active', 'fullscreen-missing');
+    onExitExam();
+  };
+
+  const handleQuitExam = async () => {
+    if (window.confirm('Do you want to Save & Submit your answers before exiting? Click OK to Submit Final Paper, or Cancel to exit without saving.')) {
+      setShowConfirmation(true);
+    } else {
+      await safeExit();
     }
   };
 
@@ -1062,7 +1083,7 @@ export default function ExamHallPage({
 
               <button
                 type="button"
-                onClick={onExitExam}
+                onClick={safeExit}
                 className="gold-button px-6 py-2.5 rounded-xl text-white font-bold text-xs shadow-md flex items-center gap-2 cursor-pointer"
               >
                 <span>Return to Student Dashboard</span>
@@ -1128,12 +1149,18 @@ export default function ExamHallPage({
 
               <button
                 type="button"
-                onClick={() => {
-                  if (confirm('Are you sure you want to exit the examination hall? Unsubmitted answers will be lost.')) {
-                    onExitExam();
-                  }
-                }}
-                className="p-2 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 hover:border-rose-200 transition-colors cursor-pointer text-xs font-bold"
+                onClick={() => setShowConfirmation(true)}
+                className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Save & Submit Examination"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Save & Submit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleQuitExam}
+                className="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-600 hover:text-rose-700 border border-stone-200 hover:border-rose-200 transition-colors cursor-pointer text-xs font-bold"
                 title="Exit Examination"
               >
                 Exit
@@ -1558,14 +1585,25 @@ export default function ExamHallPage({
                     Mark & Next
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={handleNextQuestion}
-                    className="gold-button px-5 py-2.5 rounded-xl text-white font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>Save & Next</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  {currentGlobalQuestion.globalIndex < allQuestions.length ? (
+                    <button
+                      type="button"
+                      onClick={handleNextQuestion}
+                      className="gold-button px-5 py-2.5 rounded-xl text-white font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Save & Next</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmation(true)}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-[1.02]"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Save & Submit Final Paper</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </main>
