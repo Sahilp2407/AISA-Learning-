@@ -578,19 +578,19 @@ Grounded in ITM University B.Tech CSE Curriculum
         ) : (
           <>
             {/* Top App Header Bar */}
-            <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-borderLight px-6 py-3.5 flex items-center justify-between gap-4">
+            <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-borderLight px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
               
               {/* Download Notification Toast */}
           {downloadToast && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-[#161B22] text-white px-4 py-2.5 rounded-2xl text-xs shadow-xl border border-amber-500/30 flex items-center gap-2 font-medium animate-bounce">
-              <Download className="w-4 h-4 text-[#ED7D31]" />
-              <span>{downloadToast}</span>
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-[#161B22] text-white px-4 py-2.5 rounded-2xl text-xs shadow-xl border border-amber-500/30 flex items-center gap-2 font-medium animate-bounce max-w-[90vw] truncate">
+              <Download className="w-4 h-4 text-[#ED7D31] shrink-0" />
+              <span className="truncate">{downloadToast}</span>
             </div>
           )}
 
           {/* New Faculty Notes Broadcast Toast */}
           {notesToast && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-r from-amber-600 to-[#ED7D31] text-white px-5 py-3 rounded-2xl text-xs shadow-2xl border border-amber-300 flex items-center gap-3 font-semibold animate-bounce max-w-xl">
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-40 bg-gradient-to-r from-amber-600 to-[#ED7D31] text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs shadow-2xl border border-amber-300 flex items-center gap-2.5 sm:gap-3 font-semibold animate-bounce max-w-[92vw] sm:max-w-xl">
               <Sparkles className="w-4 h-4 flex-shrink-0 animate-spin" />
               <span className="truncate">{notesToast}</span>
               <button
@@ -598,7 +598,7 @@ Grounded in ITM University B.Tech CSE Curriculum
                   if (broadcastNotes.length > 0) handleOpenNote(broadcastNotes[0]);
                   setNotesToast(null);
                 }}
-                className="px-3 py-1 bg-white text-[#ED7D31] rounded-xl text-[11px] font-black hover:bg-amber-50 cursor-pointer flex-shrink-0 shadow-sm"
+                className="px-2.5 sm:px-3 py-1 bg-white text-[#ED7D31] rounded-xl text-[11px] font-black hover:bg-amber-50 cursor-pointer flex-shrink-0 shadow-sm whitespace-nowrap"
               >
                 Open Guide
               </button>
@@ -607,7 +607,7 @@ Grounded in ITM University B.Tech CSE Curriculum
           )}
 
           {/* Back Button & Breadcrumbs Navigation */}
-          <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold text-charcoal truncate">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 text-xs sm:text-sm font-semibold text-charcoal min-w-0 truncate">
             {/* Context-aware Universal Back Button */}
             <button
               type="button"
@@ -622,7 +622,7 @@ Grounded in ITM University B.Tech CSE Curriculum
                   onBack();
                 }
               }}
-              className="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200/90 text-charcoal font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer border border-stone-200/80 hover:border-stone-300 shrink-0 group"
+              className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200/90 text-charcoal font-bold text-xs flex items-center gap-1 sm:gap-1.5 transition-all shadow-2xs cursor-pointer border border-stone-200/80 hover:border-stone-300 shrink-0 group"
               title={
                 currentStep === 'subject_detail'
                   ? 'Back to Subjects'
@@ -641,16 +641,17 @@ Grounded in ITM University B.Tech CSE Curriculum
 
             <button
               onClick={() => setCurrentStep('semesters')}
-              className="text-charcoal-muted hover:text-charcoal flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="text-charcoal-muted hover:text-charcoal flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+              title="Courses"
             >
               <Home className="w-4 h-4 text-[#ED7D31]" />
               <span className="hidden sm:inline">Courses</span>
             </button>
-            <span className="text-gray-300">/</span>
+            <span className="text-gray-300 hidden sm:inline">/</span>
 
             <button
               onClick={() => setCurrentStep('semesters')}
-              className={`hover:text-charcoal transition-colors cursor-pointer ${
+              className={`hover:text-charcoal transition-colors cursor-pointer hidden sm:inline truncate ${
                 currentStep === 'semesters' ? 'font-bold bg-amber-50 text-[#ED7D31] px-2 py-0.5 rounded-lg' : 'text-charcoal-muted'
               }`}
             >
@@ -662,7 +663,7 @@ Grounded in ITM University B.Tech CSE Curriculum
                 <span className="text-gray-300">/</span>
                 <button
                   onClick={() => setCurrentStep('subjects')}
-                  className={`hover:text-charcoal transition-colors cursor-pointer truncate ${
+                  className={`hover:text-charcoal transition-colors cursor-pointer truncate max-w-[85px] sm:max-w-none ${
                     currentStep === 'subjects' ? 'font-bold bg-amber-50 text-[#ED7D31] px-2 py-0.5 rounded-lg' : 'text-charcoal-muted'
                   }`}
                 >
@@ -674,7 +675,7 @@ Grounded in ITM University B.Tech CSE Curriculum
             {currentStep === 'subject_detail' && (
               <>
                 <span className="text-gray-300">/</span>
-                <span className="text-white font-bold bg-[#ED7D31] px-2.5 py-0.5 rounded-lg truncate">
+                <span className="text-white font-bold bg-[#ED7D31] px-2 sm:px-2.5 py-0.5 rounded-lg truncate max-w-[90px] sm:max-w-none">
                   {selectedSubject.name}
                 </span>
               </>
@@ -682,7 +683,7 @@ Grounded in ITM University B.Tech CSE Curriculum
           </div>
 
           {/* Right Controls: Dynamic Exam Lock Status & Chat Toggle */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Faculty AI Notes Button */}
             <button
               onClick={() => {
@@ -690,17 +691,17 @@ Grounded in ITM University B.Tech CSE Curriculum
                   handleOpenNote(broadcastNotes[0]);
                 }
               }}
-              className="relative px-3 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200/80 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-xs"
+              className="relative px-2 sm:px-3 py-1.5 rounded-xl sm:rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200/80 text-xs font-bold flex items-center gap-1 sm:gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-xs shrink-0"
               title="View AI Study Guides & University Email Notifications"
             >
-              <BookOpen className="w-3.5 h-3.5 text-[#ED7D31]" />
+              <BookOpen className="w-3.5 h-3.5 text-[#ED7D31] shrink-0" />
               <span className="hidden md:inline">Faculty Notes</span>
               {unreadNotesCount > 0 ? (
-                <span className="px-1.5 py-0.5 rounded-full bg-[#ED7D31] text-white text-[10px] font-black animate-pulse">
-                  {unreadNotesCount} New
+                <span className="px-1.5 py-0.5 rounded-full bg-[#ED7D31] text-white text-[10px] font-black animate-pulse whitespace-nowrap">
+                  {unreadNotesCount}<span className="hidden sm:inline"> New</span>
                 </span>
               ) : (
-                <span className="px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold">
+                <span className="px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-[10px] font-bold whitespace-nowrap">
                   {broadcastNotes.length}
                 </span>
               )}
@@ -709,21 +710,21 @@ Grounded in ITM University B.Tech CSE Curriculum
             {/* Exam Lockout Status Badge */}
             {isExamMode ? (
               <div 
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shadow-xs animate-pulse"
+                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1.5 rounded-xl sm:rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shadow-xs shrink-0 whitespace-nowrap animate-pulse"
                 title={`Exam Lock Active for ${activeExamLock?.course || 'Course'}. Unlocks in ${activeExamTiming?.timeRemainingStr || ''}`}
               >
-                <ShieldAlert className="w-4 h-4 text-rose-600" />
-                <span className="hidden md:inline">Exam Lock Active</span>
+                <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-600 shrink-0" />
+                <span className="hidden lg:inline">Exam Lock Active</span>
                 {activeExamTiming?.timeRemainingStr && (
-                  <span className="bg-rose-200/80 text-rose-900 px-2 py-0.5 rounded-md font-mono text-[10px]">
+                  <span className="bg-rose-200/80 text-rose-900 px-1.5 sm:px-2 py-0.5 rounded-md font-mono text-[10px] sm:text-xs font-bold whitespace-nowrap shrink-0">
                     {activeExamTiming.timeRemainingStr}
                   </span>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span className="hidden md:inline font-bold">AI Active</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3.5 py-1.5 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs shrink-0 whitespace-nowrap">
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
+                <span className="hidden sm:inline font-bold">AI Active</span>
               </div>
             )}
 
@@ -737,7 +738,7 @@ Grounded in ITM University B.Tech CSE Curriculum
                 }
                 setIsChatOpen(!isChatOpen);
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all shadow-xs ${
+              className={`px-2 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 sm:gap-1.5 border transition-all shadow-xs shrink-0 ${
                 isExamMode
                   ? 'bg-rose-50/70 text-rose-700 border-rose-200 cursor-not-allowed'
                   : isChatOpen
@@ -746,9 +747,9 @@ Grounded in ITM University B.Tech CSE Curriculum
               }`}
               title={isExamMode ? 'AI Tutor Locked during examination' : 'Toggle AI Tutor'}
             >
-              <Bot className="w-4 h-4 text-current" />
+              <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-current shrink-0" />
               <span className="hidden sm:inline">AI Tutor</span>
-              {isExamMode && <Lock className="w-3 h-3 text-rose-600" />}
+              {isExamMode && <Lock className="w-3 h-3 text-rose-600 shrink-0" />}
             </button>
           </div>
         </header>
