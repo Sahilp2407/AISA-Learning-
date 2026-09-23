@@ -1,4 +1,3 @@
-// Firebase Cloud Firestore Service for Course Curriculum & Student Quiz Assessment Submissions
 import { 
   collection, 
   addDoc, 
@@ -10,10 +9,19 @@ import {
   doc, 
   setDoc 
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { ref, push, set } from 'firebase/database';
+import { db, rtdb } from '../firebase';
 import { SEMESTERS_DATA } from '../data/curriculumData';
 
 const LOCAL_QUIZ_STORAGE_KEY = 'aisa_local_quiz_submissions';
+
+function cleanForRTDB(obj) {
+  return JSON.parse(JSON.stringify(obj, (k, v) => (v === undefined ? null : v)));
+}
+
+function sanitizeRTDBKey(key) {
+  return String(key || 'unknown').replace(/[.#$/[\]]/g, '_');
+}
 
 /**
  * Save student quiz assessment results to Cloud Firestore ('quiz_submissions' collection)
@@ -42,26 +50,54 @@ export async function saveQuizSubmission(submissionData) {
     createdAtLocal: new Date().toISOString()
   };
 
-  // Try Firestore Cloud write
+  // 1. Save to Firebase Realtime Database
+  let rtdbKey = null;
+  const safeStudentId = sanitizeRTDBKey(payload.studentId);
+  const safeCourseCode = sanitizeRTDBKey(payload.courseCode);
+
   try {
-    const docRef = await addDoc(collection(db, 'quiz_submissions'), {
+    const quizSubRef = ref(rtdb, 'quiz_submissions');
+    const newQuizRef = push(quizSubRef);
+    rtdbKey = newQuizRef.key || `quiz-${Date.now()}`;
+
+    const rtdbPayload = cleanForRTDB({
       ...payload,
-      submittedAt: serverTimestamp()
+      id: rtdbKey,
+      databaseSource: 'Firebase Realtime Database',
+      submittedAtIso: new Date().toISOString(),
+      submittedAtTimestamp: Date.now()
     });
 
-    console.log('✅ Quiz submission saved to Cloud Firestore with ID:', docRef.id);
-    
-    // Also save in local fallback mirror
-    saveToLocalMirror({ ...payload, id: docRef.id, isCloud: true });
+    await set(newQuizRef, rtdbPayload);
+
+    // Also write to /student_quiz_answers/{studentId}/{courseCode}
+    const studentQuizRef = ref(rtdb, `student_quiz_answers/${safeStudentId}/${safeCourseCode}`);
+    await set(studentQuizRef, rtdbPayload);
+
+    console.log('✅ Quiz submission saved to Firebase Realtime Database with ID:', rtdbKey);
+
+    saveToLocalMirror({ ...rtdbPayload, isCloud: true, isRealtimeDB: true });
+
+    // Optional Firestore mirror
+    try {
+      await addDoc(collection(db, 'quiz_submissions'), {
+        ...payload,
+        rtdbKey,
+        submittedAt: serverTimestamp()
+      });
+    } catch (fsErr) {
+      console.info('Firestore quiz mirror skipped:', fsErr.message);
+    }
 
     return {
       success: true,
-      id: docRef.id,
+      id: rtdbKey,
       isCloud: true,
-      data: payload
+      isRealtimeDB: true,
+      data: rtdbPayload
     };
   } catch (cloudErr) {
-    console.warn('⚠️ Cloud Firestore write failed (offline or security rules). Using local persistent store:', cloudErr);
+    console.warn('⚠️ Realtime Database quiz write failed. Using local persistent store:', cloudErr);
     
     // Fallback locally
     const fallbackId = `local-sub-${Date.now()}`;

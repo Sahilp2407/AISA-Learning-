@@ -9,10 +9,12 @@ import {
   onAuthStateChanged 
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBD5vOmwZ_ZzYNkhpVGDSnBljEYmL3lMvM",
   authDomain: "student-assistant-platform.firebaseapp.com",
+  databaseURL: "https://student-assistant-platform-default-rtdb.firebaseio.com",
   projectId: "student-assistant-platform",
   storageBucket: "student-assistant-platform.firebasestorage.app",
   messagingSenderId: "303035525851",
@@ -23,10 +25,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication & Firestore
+// Initialize Firebase Authentication, Firestore & Realtime Database
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+export const rtdb = getDatabase(app, "https://student-assistant-platform-default-rtdb.firebaseio.com");
 
 // Google Sign-In helper
 export const signInWithGoogle = async () => {
