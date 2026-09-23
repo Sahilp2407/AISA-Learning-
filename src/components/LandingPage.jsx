@@ -29,7 +29,10 @@ import {
   Pause,
   Volume2,
   VolumeX,
-  Video
+  Video,
+  Maximize2,
+  Minimize2,
+  X
 } from 'lucide-react';
 import ThreeHeroCanvas from './ThreeHeroCanvas';
 import Footer from './Footer';
@@ -58,9 +61,85 @@ const staggerContainer = {
 export default function LandingPage({ onNavigate }) {
   const [openFaq, setOpenFaq] = useState(0);
   const videoRef = useRef(null);
+  const heroVideoAnchorRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [, setIsVideoAvailable] = useState(true);
+
+  // Mobile Floating Sticky Mini-Player State
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
+  const [isManualPiP, setIsManualPiP] = useState(false);
+  const [isFloatingDismissed, setIsFloatingDismissed] = useState(false);
+
+  // Screen size check for mobile/tablet devices (< 1024px)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileView(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Scroll listener to detect when hero video moves out of view on mobile
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!heroVideoAnchorRef.current) return;
+      const rect = heroVideoAnchorRef.current.getBoundingClientRect();
+      // On mobile, float when the hero video is scrolled near the top edge or user scrolls down
+      const isPast = rect.bottom < 140 || window.scrollY > 150;
+      setIsScrolledPastHero(isPast);
+
+      // If user scrolls back up near the top of the page, reset dismissal so next scroll floats again
+      if (window.scrollY < 60) {
+        setIsFloatingDismissed(false);
+        setIsManualPiP(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const isFloating = isMobileView && (isManualPiP || (isScrolledPastHero && !isFloatingDismissed));
+
+  // Control handlers
+  const togglePlay = (e) => {
+    if (e) e.stopPropagation();
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play().catch(() => {});
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = (e) => {
+    if (e) e.stopPropagation();
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleExpandToHero = (e) => {
+    if (e) e.stopPropagation();
+    setIsManualPiP(false);
+    setIsFloatingDismissed(true);
+    if (heroVideoAnchorRef.current) {
+      heroVideoAnchorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handleDismissFloating = (e) => {
+    if (e) e.stopPropagation();
+    setIsManualPiP(false);
+    setIsFloatingDismissed(true);
+  };
 
   // Auto-play video on mount
   useEffect(() => {
@@ -176,16 +255,16 @@ export default function LandingPage({ onNavigate }) {
 
             {/* Main Headline with High-End Typographic Rhythm */}
             <div className="space-y-1.5">
-              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[54px] xl:text-[60px] font-black tracking-tight text-slate-900 leading-[1.08]">
+              <h1 className="font-sans text-3xl xs:text-4xl sm:text-5xl lg:text-[54px] xl:text-[60px] font-black tracking-tight text-slate-900 leading-[1.1]">
                 Master your syllabus.
               </h1>
-              <h1 className="font-sans text-4xl sm:text-5xl lg:text-[54px] xl:text-[60px] font-black tracking-tight text-slate-900 leading-[1.08]">
+              <h1 className="font-sans text-3xl xs:text-4xl sm:text-5xl lg:text-[54px] xl:text-[60px] font-black tracking-tight text-slate-900 leading-[1.1]">
                 Ace your exams.
               </h1>
               <div className="pt-2 flex items-center flex-wrap gap-3">
-                <div className="relative inline-flex items-center gap-2.5 px-4 py-1.5 rounded-2xl bg-gradient-to-r from-[#ED7D31] via-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25 border border-white/20">
-                  <ShieldCheck className="w-6 h-6 text-amber-200" />
-                  <span className="font-sans text-3xl sm:text-4xl lg:text-[46px] xl:text-[50px] font-black tracking-tight">
+                <div className="relative inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-2xl bg-gradient-to-r from-[#ED7D31] via-orange-500 to-amber-500 text-white shadow-lg shadow-orange-500/25 border border-white/20">
+                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200 flex-shrink-0" />
+                  <span className="font-sans text-2xl xs:text-3xl sm:text-4xl lg:text-[46px] xl:text-[50px] font-black tracking-tight">
                     Stay honor-safe.
                   </span>
                 </div>
@@ -198,10 +277,10 @@ export default function LandingPage({ onNavigate }) {
             </p>
 
             {/* Dual Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4 pt-1">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-1 w-full sm:w-auto">
               <button
                 onClick={() => onNavigate('login')}
-                className="group px-7 py-3.5 rounded-2xl text-sm font-extrabold text-white bg-gradient-to-r from-[#ED7D31] to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2.5 cursor-pointer"
+                className="group w-full sm:w-auto justify-center px-7 py-3.5 rounded-2xl text-sm font-extrabold text-white bg-gradient-to-r from-[#ED7D31] to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center gap-2.5 cursor-pointer"
               >
                 <span>Choose your course</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -212,7 +291,7 @@ export default function LandingPage({ onNavigate }) {
                   const el = document.getElementById('features');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="group px-6 py-3.5 rounded-2xl text-sm font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md transition-all duration-200 flex items-center gap-2 cursor-pointer"
+                className="group w-full sm:w-auto justify-center px-6 py-3.5 rounded-2xl text-sm font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 shadow-xs hover:shadow-md transition-all duration-200 flex items-center gap-2 cursor-pointer"
               >
                 <Lock className="w-4 h-4 text-slate-400 group-hover:text-[#ED7D31] transition-colors" />
                 <span>See exam lockout</span>
@@ -220,7 +299,7 @@ export default function LandingPage({ onNavigate }) {
             </div>
 
             {/* 4 Feature Micro-Cards Grid */}
-            <div className="grid grid-cols-2 gap-2.5 max-w-lg pt-2">
+            <div className="grid grid-cols-1 xs:grid-cols-2 gap-2.5 max-w-lg pt-2 w-full">
               <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/70 border border-slate-200/70 backdrop-blur-xs shadow-2xs hover:border-[#ED7D31]/30 transition-colors">
                 <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -284,11 +363,44 @@ export default function LandingPage({ onNavigate }) {
             transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="lg:col-span-7 w-full flex flex-col items-center justify-center relative"
           >
-            <div className="relative w-full max-w-2xl lg:max-w-none">
-              {/* Decorative Background Glow */}
-              <div className="absolute -inset-1.5 bg-gradient-to-r from-[#ED7D31] via-amber-400 to-orange-500 rounded-[32px] blur-md opacity-35" />
+            <div ref={heroVideoAnchorRef} className="relative w-full max-w-2xl lg:max-w-none">
+              {/* Decorative Background Glow (Active when docked in hero) */}
+              {!isFloating && (
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-[#ED7D31] via-amber-400 to-orange-500 rounded-[32px] blur-md opacity-35" />
+              )}
 
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-white/90 bg-slate-950 group aspect-video">
+              {/* Placeholder in hero when floating on mobile to prevent layout shift */}
+              {isFloating && (
+                <div className="w-full aspect-video rounded-3xl border-2 border-dashed border-amber-400/40 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-amber-500/10 flex flex-col items-center justify-center p-4 text-center">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#ED7D31] to-amber-500 text-white flex items-center justify-center mb-2 shadow-md shadow-orange-500/20 animate-pulse">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-black text-charcoal">AISA Demo Video is Playing</p>
+                  <p className="text-[11px] text-charcoal-muted mt-0.5 max-w-xs">
+                    Playing in the bottom-right corner as you scroll through courses & modules
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsManualPiP(false);
+                      setIsFloatingDismissed(true);
+                    }}
+                    className="mt-3 px-3.5 py-1.5 rounded-xl bg-white hover:bg-amber-50 text-[#ED7D31] text-xs font-bold border border-amber-300 shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>Expand Video to Hero</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Video Player Card (Floats to bottom-right on mobile when scrolled) */}
+              <div className={`
+                overflow-hidden bg-slate-950 group aspect-video transition-all duration-300 ease-out
+                ${isFloating 
+                  ? 'fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-3 xs:right-4 z-50 w-48 xs:w-56 sm:w-64 rounded-2xl shadow-2xl shadow-black/60 border-2 border-white/95 ring-2 ring-[#ED7D31]/60 backdrop-blur-md' 
+                  : 'relative rounded-3xl shadow-2xl border-2 border-white/90'
+                }
+              `}>
                 
                 {/* Embedded HTML5 Video with Audio, Auto-loop and Poster Fallback */}
                 <video
@@ -302,16 +414,7 @@ export default function LandingPage({ onNavigate }) {
                   onLoadedData={() => setIsVideoAvailable(true)}
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
-                  onClick={() => {
-                    if (videoRef.current) {
-                      if (isPlaying) {
-                        videoRef.current.pause();
-                      } else {
-                        videoRef.current.play();
-                      }
-                      setIsPlaying(!isPlaying);
-                    }
-                  }}
+                  onClick={togglePlay}
                   className="w-full h-full object-cover cursor-pointer"
                 >
                   <source src="/gemini_generated_video_5ff571c6.mp4" type="video/mp4" />
@@ -324,54 +427,98 @@ export default function LandingPage({ onNavigate }) {
                 </video>
 
                 {/* Subtle Bottom Gradient for Controls Contrast */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none" />
+
+                {/* Floating Mini-Player Top Bar (Active only when floating) */}
+                {isFloating && (
+                  <div className="absolute top-2 inset-x-2 flex items-center justify-between z-30 pointer-events-auto">
+                    <div className="flex items-center gap-1.5 bg-black/70 backdrop-blur-xs px-2 py-0.5 rounded-full border border-white/20">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#ED7D31] animate-ping" />
+                      <span className="text-[9px] font-black text-white tracking-wider uppercase">Live Demo</span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={handleExpandToHero}
+                        className="w-6 h-6 rounded-lg bg-black/70 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-xs border border-white/20 transition-all cursor-pointer shadow-sm"
+                        title="Expand Video to Hero"
+                      >
+                        <Maximize2 className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDismissFloating}
+                        className="w-6 h-6 rounded-lg bg-black/70 hover:bg-rose-600 text-white flex items-center justify-center backdrop-blur-xs border border-white/20 transition-all cursor-pointer shadow-sm"
+                        title="Close Mini-Player"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Central Play Button Overlay when Paused */}
                 {!isPlaying && (
                   <button
-                    onClick={() => {
-                      if (videoRef.current) {
-                        videoRef.current.play();
-                        setIsPlaying(true);
-                      }
-                    }}
-                    className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-[#ED7D31]/90 hover:bg-[#ED7D31] text-white flex items-center justify-center shadow-2xl backdrop-blur-sm cursor-pointer transition-transform hover:scale-110 active:scale-95 z-20"
+                    type="button"
+                    onClick={togglePlay}
+                    className={`absolute inset-0 m-auto rounded-full bg-[#ED7D31]/90 hover:bg-[#ED7D31] text-white flex items-center justify-center shadow-2xl backdrop-blur-sm cursor-pointer transition-transform hover:scale-110 active:scale-95 z-20 ${
+                      isFloating ? 'w-10 h-10' : 'w-16 h-16'
+                    }`}
                     title="Play Video"
                   >
-                    <Play className="w-7 h-7 ml-0.5 fill-current" />
+                    <Play className={`${isFloating ? 'w-4 h-4' : 'w-7 h-7'} ml-0.5 fill-current`} />
                   </button>
                 )}
 
                 {/* Clean Bottom-Right Interactive Video Controls */}
-                <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+                <div className={`absolute flex items-center gap-1.5 sm:gap-2 z-20 ${
+                  isFloating ? 'bottom-2 right-2' : 'bottom-4 right-4'
+                }`}>
+                  {/* PiP Popout button on mobile when NOT floating */}
+                  {!isFloating && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsManualPiP(true);
+                      }}
+                      className="lg:hidden w-9 h-9 rounded-xl bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
+                      title="Float to Corner (PiP)"
+                    >
+                      <Minimize2 className="w-4 h-4 text-amber-400" />
+                    </button>
+                  )}
+
                   <button
-                    onClick={() => {
-                      setIsMuted(!isMuted);
-                      if (videoRef.current) {
-                        videoRef.current.muted = !isMuted;
-                      }
-                    }}
-                    className="w-9 h-9 rounded-xl bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-md"
+                    type="button"
+                    onClick={toggleMute}
+                    className={`${
+                      isFloating ? 'w-7 h-7 rounded-lg' : 'w-9 h-9 rounded-xl'
+                    } bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all cursor-pointer shadow-md`}
                     title={isMuted ? "Unmute Audio" : "Mute Audio"}
                   >
-                    {isMuted ? <VolumeX className="w-4 h-4 text-slate-300" /> : <Volume2 className="w-4 h-4 text-amber-400" />}
+                    {isMuted ? (
+                      <VolumeX className={`${isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4'} text-slate-300`} />
+                    ) : (
+                      <Volume2 className={`${isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4'} text-amber-400`} />
+                    )}
                   </button>
 
                   <button
-                    onClick={() => {
-                      if (videoRef.current) {
-                        if (isPlaying) {
-                          videoRef.current.pause();
-                        } else {
-                          videoRef.current.play();
-                        }
-                        setIsPlaying(!isPlaying);
-                      }
-                    }}
-                    className="w-9 h-9 rounded-xl bg-[#ED7D31] hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-[#ED7D31]/30 transition-all cursor-pointer"
+                    type="button"
+                    onClick={togglePlay}
+                    className={`${
+                      isFloating ? 'w-7 h-7 rounded-lg' : 'w-9 h-9 rounded-xl'
+                    } bg-[#ED7D31] hover:bg-orange-600 active:scale-95 text-white flex items-center justify-center shadow-lg shadow-[#ED7D31]/30 transition-all cursor-pointer`}
                     title={isPlaying ? "Pause Video" : "Play Video"}
                   >
-                    {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5 fill-current" />}
+                    {isPlaying ? (
+                      <Pause className={`${isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} />
+                    ) : (
+                      <Play className={`${isFloating ? 'w-3.5 h-3.5' : 'w-4 h-4'} ml-0.5 fill-current`} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -470,7 +617,7 @@ export default function LandingPage({ onNavigate }) {
           </p>
 
           {/* Interactive Filter Pills with Spring Physics */}
-          <div className="flex items-center justify-center gap-2 pt-6 flex-wrap">
+          <div className="flex items-center gap-2 pt-6 overflow-x-auto no-scrollbar py-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:justify-center flex-nowrap sm:flex-wrap">
             {['All', 'Systems', 'Algorithms', 'Mathematics'].map((tab) => (
               <button
                 key={tab}
@@ -705,51 +852,58 @@ export default function LandingPage({ onNavigate }) {
             variants={fadeInUp}
             className="bg-white rounded-3xl border border-borderLight shadow-sm overflow-hidden"
           >
-            <div className="grid grid-cols-12 p-4 sm:p-5 bg-ghost border-b border-borderLight font-sans font-bold text-xs sm:text-sm text-charcoal">
-              <div className="col-span-6 sm:col-span-5">Capability & Protocol</div>
-              <div className="col-span-3 sm:col-span-3 text-center text-charcoal-muted">Generic AI Chatbots</div>
-              <div className="col-span-3 sm:col-span-4 text-center text-gold font-bold">AISA Platform</div>
-            </div>
+            <div className="overflow-x-auto">
+              <div className="min-w-[520px]">
+                <div className="grid grid-cols-12 p-4 sm:p-5 bg-ghost border-b border-borderLight font-sans font-bold text-xs sm:text-sm text-charcoal">
+                  <div className="col-span-6 sm:col-span-5">Capability & Protocol</div>
+                  <div className="col-span-3 sm:col-span-3 text-center text-charcoal-muted">Generic AI Chatbots</div>
+                  <div className="col-span-3 sm:col-span-4 text-center text-gold font-bold">AISA Platform</div>
+                </div>
 
-            {[
-              {
-                feature: 'Exam-Schedule Automatic Lockout',
-                generic: 'No (High Plagiarism Risk)',
-                aisa: 'Yes (Automatic Lockout)',
-              },
-              {
-                feature: 'Syllabus & Course Slide Grounding',
-                generic: 'Unverified Internet Scrapes',
-                aisa: 'Curriculum Grounded',
-              },
-              {
-                feature: 'Responsible AI Feedback & Flagging',
-                generic: 'Ignored / No Human Loop',
-                aisa: 'Direct Faculty Audit Queue',
-              },
-              {
-                feature: 'Direct Homework Copying Protection',
-                generic: 'Blindly Solves Everything',
-                aisa: 'Socratic Conceptual Coaching',
-              },
-            ].map((row, idx) => (
-              <div 
-                key={idx}
-                className="grid grid-cols-12 p-4 sm:p-5 border-b border-borderLight/60 text-xs sm:text-sm items-center hover:bg-wheat-50/50 transition-colors"
-              >
-                <div className="col-span-6 sm:col-span-5 font-semibold text-charcoal">
-                  {row.feature}
-                </div>
-                <div className="col-span-3 sm:col-span-3 text-center text-charcoal-muted flex items-center justify-center gap-1">
-                  <XCircle className="w-4 h-4 text-alertSoft hidden sm:inline" />
-                  <span>{row.generic}</span>
-                </div>
-                <div className="col-span-3 sm:col-span-4 text-center font-bold text-charcoal flex items-center justify-center gap-1.5 bg-gold/15 py-1.5 px-2 rounded-xl border border-gold/30">
-                  <CheckCircle2 className="w-4 h-4 text-successSoft" />
-                  <span>{row.aisa}</span>
-                </div>
+                {[
+                  {
+                    feature: 'Exam-Schedule Automatic Lockout',
+                    generic: 'No (High Plagiarism Risk)',
+                    aisa: 'Yes (Automatic Lockout)',
+                  },
+                  {
+                    feature: 'Syllabus & Course Slide Grounding',
+                    generic: 'Unverified Internet Scrapes',
+                    aisa: 'Curriculum Grounded',
+                  },
+                  {
+                    feature: 'Responsible AI Feedback & Flagging',
+                    generic: 'Ignored / No Human Loop',
+                    aisa: 'Direct Faculty Audit Queue',
+                  },
+                  {
+                    feature: 'Direct Homework Copying Protection',
+                    generic: 'Blindly Solves Everything',
+                    aisa: 'Socratic Conceptual Coaching',
+                  },
+                ].map((row, idx) => (
+                  <div 
+                    key={idx}
+                    className="grid grid-cols-12 p-4 sm:p-5 border-b border-borderLight/60 text-xs sm:text-sm items-center hover:bg-wheat-50/50 transition-colors"
+                  >
+                    <div className="col-span-6 sm:col-span-5 font-semibold text-charcoal">
+                      {row.feature}
+                    </div>
+                    <div className="col-span-3 sm:col-span-3 text-center text-charcoal-muted flex items-center justify-center gap-1">
+                      <XCircle className="w-4 h-4 text-alertSoft hidden sm:inline" />
+                      <span>{row.generic}</span>
+                    </div>
+                    <div className="col-span-3 sm:col-span-4 text-center font-bold text-charcoal flex items-center justify-center gap-1.5 bg-gold/15 py-1.5 px-2 rounded-xl border border-gold/30">
+                      <CheckCircle2 className="w-4 h-4 text-successSoft" />
+                      <span>{row.aisa}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div className="sm:hidden px-4 py-2 bg-ghost/80 border-t border-borderLight/40 text-[11px] text-center text-charcoal-muted font-medium">
+              👉 Swipe left/right to compare capabilities
+            </div>
           </motion.div>
         </div>
       </section>

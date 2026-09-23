@@ -145,27 +145,27 @@ export default function SubjectQuizModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col my-auto max-h-[92vh]"
+          className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col my-auto max-h-[92dvh]"
         >
           {/* Header */}
-          <div className="px-6 py-4 bg-gradient-to-r from-amber-50 via-orange-50/70 to-amber-50 border-b border-amber-200/80 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ED7D31] to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20 flex-shrink-0">
-                <Award className="w-5 h-5" />
+          <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-amber-50 via-orange-50/70 to-amber-50 border-b border-amber-200/80 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#ED7D31] to-amber-500 text-white flex items-center justify-center shadow-md shadow-orange-500/20 flex-shrink-0">
+                <Award className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#ED7D31] bg-white px-2 py-0.5 rounded-md border border-amber-200">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-[#ED7D31] bg-white px-1.5 py-0.5 rounded-md border border-amber-200 flex-shrink-0">
                     {subject.code}
                   </span>
-                  <span className="text-[11px] font-semibold text-slate-500">Unit {selectedUnit} MCQ Assessment</span>
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 truncate">Unit {selectedUnit} MCQ</span>
                 </div>
-                <h3 className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug truncate max-w-[280px] sm:max-w-md">
+                <h3 className="font-extrabold text-slate-900 text-xs sm:text-base leading-snug truncate max-w-[130px] xs:max-w-[220px] sm:max-w-md">
                   {subject.name}
                 </h3>
               </div>
@@ -354,7 +354,7 @@ export default function SubjectQuizModal({
           </div>
 
           {/* Footer Controls */}
-          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-3">
+          <div className="px-3 sm:px-6 py-3 sm:py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2 pb-safe">
             {!isSubmitted ? (
               <>
                 <div className="flex items-center gap-1.5">

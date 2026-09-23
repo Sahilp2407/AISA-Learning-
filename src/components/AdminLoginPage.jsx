@@ -107,7 +107,7 @@ export default function AdminLoginPage({ onAdminLoginSuccess, onBack }) {
     <div className="min-h-screen w-full bg-[#FBFBFA] flex flex-col lg:flex-row font-sans selection:bg-[#ED7D31]/20 selection:text-charcoal">
       
       {/* ================= LEFT COLUMN: SLEEK FACULTY HERO BRANDING PANEL ================= */}
-      <div className="lg:w-[46%] min-h-[460px] lg:min-h-screen bg-gradient-to-b from-[#0F141A] via-[#111720] to-[#0B0E13] text-white p-8 sm:p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden lg:rounded-r-[40px] shadow-2xl border-r border-white/5">
+      <div className="lg:w-[46%] py-6 px-5 sm:p-10 lg:p-16 lg:min-h-screen bg-gradient-to-b from-[#0F141A] via-[#111720] to-[#0B0E13] text-white flex flex-col justify-between relative overflow-hidden lg:rounded-r-[40px] shadow-xl border-r border-white/5">
         
         {/* Ambient Glows */}
         <div className="absolute -top-20 -right-20 w-96 h-96 bg-[#ED7D31]/18 rounded-full blur-3xl pointer-events-none" />
@@ -121,20 +121,28 @@ export default function AdminLoginPage({ onAdminLoginSuccess, onBack }) {
 
         {/* Top Header Pill */}
         <div className="relative z-10 flex items-center justify-between">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 border border-white/10 text-white/90 backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-semibold bg-white/10 border border-white/10 text-white/90 backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-[#ED7D31] animate-pulse" />
             <span className="tracking-wider uppercase text-[10px] font-bold">Faculty Governance & Audit</span>
           </div>
+
+          <button 
+            onClick={onBack}
+            className="lg:hidden text-xs text-stone-300 hover:text-white flex items-center gap-1 font-semibold cursor-pointer px-2.5 py-1 rounded-lg bg-white/10"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-[#ED7D31]" />
+            <span>Back</span>
+          </button>
         </div>
 
         {/* Main Headline & Statement */}
-        <div className="relative z-10 my-auto py-8 max-w-lg">
-          <h1 className="font-sans text-4xl sm:text-5xl lg:text-[52px] font-extrabold tracking-tight text-white leading-[1.12]">
+        <div className="relative z-10 my-auto py-3 sm:py-6 lg:py-8 max-w-lg">
+          <h1 className="font-sans text-2xl xs:text-3xl sm:text-4xl lg:text-[52px] font-extrabold tracking-tight text-white leading-[1.15]">
             University Faculty & Admin{' '}
             <span className="relative inline-block text-white">
               Portal
               <svg 
-                className="absolute -bottom-2 left-0 w-full h-3 text-[#ED7D31]" 
+                className="absolute -bottom-1.5 left-0 w-full h-2.5 text-[#ED7D31]" 
                 viewBox="0 0 100 12" 
                 fill="none" 
                 preserveAspectRatio="none"
@@ -150,12 +158,12 @@ export default function AdminLoginPage({ onAdminLoginSuccess, onBack }) {
             <span className="text-[#ED7D31]">.</span>
           </h1>
 
-          <p className="mt-6 text-sm sm:text-base text-gray-300 font-serif italic leading-relaxed">
+          <p className="mt-2.5 sm:mt-4 lg:mt-6 text-xs sm:text-sm lg:text-base text-gray-300 font-serif italic leading-relaxed">
             "Manage real-time exam lockout windows, audit student AI flags, and configure Gemini model parameters."
           </p>
 
-          {/* 3 Core Faculty Control Pillars */}
-          <div className="mt-8 space-y-3 pt-2 text-xs font-medium text-gray-300">
+          {/* 3 Core Faculty Control Pillars (hidden on mobile, visible on desktop) */}
+          <div className="hidden lg:block mt-8 space-y-3 pt-2 text-xs font-medium text-gray-300">
             <div className="flex items-center gap-2.5">
               <div className="w-5 h-5 rounded-full bg-[#ED7D31]/20 flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#ED7D31]" />
@@ -176,9 +184,9 @@ export default function AdminLoginPage({ onAdminLoginSuccess, onBack }) {
             </div>
           </div>
 
-          {/* Institutional Badge Pill */}
-          <div className="mt-8 inline-flex items-center gap-3.5 bg-white/[0.06] border border-white/10 backdrop-blur-md rounded-2xl p-3 max-w-md">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ED7D31] to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
+          {/* Institutional Badge Pill (hidden on small mobile, visible on desktop) */}
+          <div className="hidden sm:inline-flex mt-6 lg:mt-8 items-center gap-3.5 bg-white/[0.06] border border-white/10 backdrop-blur-md rounded-2xl p-3 max-w-md">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ED7D31] to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-md flex-shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div className="text-left">
@@ -189,7 +197,7 @@ export default function AdminLoginPage({ onAdminLoginSuccess, onBack }) {
         </div>
 
         {/* Bottom Trust Line */}
-        <div className="relative z-10 pt-4 border-t border-white/10">
+        <div className="hidden lg:block relative z-10 pt-4 border-t border-white/10">
           <p className="text-[10px] font-bold tracking-widest uppercase text-gray-400">
             AISA Academic Governance Platform · Department Administration v2.4
           </p>
@@ -197,7 +205,7 @@ export default function AdminLoginPage({ onAdminLoginSuccess, onBack }) {
       </div>
 
       {/* ================= RIGHT COLUMN: CLEAN FLOATING ADMIN LOGIN CARD ================= */}
-      <div className="lg:w-[54%] min-h-screen bg-[#FBFBFA] flex flex-col justify-between p-4 sm:p-8 lg:p-12 relative">
+      <div className="lg:w-[54%] bg-[#FBFBFA] flex flex-col justify-between p-4 sm:p-8 lg:p-12 relative min-h-0 lg:min-h-screen">
         
         {/* Top Bar Navigation */}
         <div className="flex items-center justify-between w-full max-w-md mx-auto pt-2 pb-4">

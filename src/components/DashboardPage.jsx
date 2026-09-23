@@ -395,10 +395,10 @@ Grounded in ITM University B.Tech CSE Curriculum
   const categories = ['All', ...new Set((selectedSemester?.subjects || []).map(s => s.category))];
 
   return (
-    <div className="min-h-screen bg-[#F4F3EE] text-charcoal flex flex-row overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#F4F3EE] text-charcoal flex flex-col md:flex-row overflow-hidden font-sans">
       
-      {/* ================= 1. LEFT ICON MINI SIDEBAR ================= */}
-      <aside className="w-16 sm:w-20 bg-[#161B22] text-white flex flex-col items-center justify-between py-6 border-r border-gray-800 z-30 flex-shrink-0">
+      {/* ================= 1. DESKTOP LEFT ICON MINI SIDEBAR ================= */}
+      <aside className="hidden md:flex md:w-16 lg:w-20 bg-[#161B22] text-white flex-col items-center justify-between py-6 border-r border-gray-800 z-30 flex-shrink-0">
         
         {/* Top App Logo */}
         <div className="flex flex-col items-center gap-6">
@@ -490,8 +490,71 @@ Grounded in ITM University B.Tech CSE Curriculum
         </div>
       </aside>
 
+      {/* ================= MOBILE BOTTOM NAVIGATION DOCK ================= */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#161B22]/98 backdrop-blur-xl border-t border-gray-800 px-2 py-1.5 flex items-center justify-around shadow-2xl safe-bottom select-none">
+        <button
+          onClick={() => setCurrentStep('semesters')}
+          className={`flex flex-col items-center gap-0.5 p-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
+            currentStep === 'semesters' ? 'text-[#ED7D31]' : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          <LayoutGrid className="w-5 h-5" />
+          <span>Courses</span>
+        </button>
+
+        <button
+          onClick={() => {
+            if (broadcastNotes.length > 0 && !selectedNoteModal) {
+              setSelectedNoteModal(broadcastNotes[0]);
+            }
+            setCurrentStep('faculty_notes');
+          }}
+          className={`flex flex-col items-center gap-0.5 p-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer relative ${
+            currentStep === 'faculty_notes' ? 'text-[#ED7D31]' : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          <BookOpen className="w-5 h-5" />
+          <span>Notes</span>
+          {unreadNotesCount > 0 && (
+            <span className="w-2 h-2 rounded-full bg-[#ED7D31] absolute top-1 right-2 ring-2 ring-[#161B22]" />
+          )}
+        </button>
+
+        <button
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className={`flex flex-col items-center gap-0.5 p-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer relative ${
+            isChatOpen ? 'text-[#ED7D31]' : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          <div className="relative">
+            <Bot className="w-5 h-5" />
+            <span className="w-2 h-2 rounded-full bg-[#ED7D31] absolute -top-0.5 -right-0.5 animate-ping" />
+          </div>
+          <span>AI Tutor</span>
+        </button>
+
+        <button
+          onClick={() => setIsExamMode(!isExamMode)}
+          className={`flex flex-col items-center gap-0.5 p-1.5 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
+            isExamMode ? 'text-red-400' : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          {isExamMode ? <ShieldAlert className="w-5 h-5 animate-pulse text-red-400" /> : <ShieldCheck className="w-5 h-5" />}
+          <span>Exam Mode</span>
+        </button>
+
+        <button
+          onClick={onBack || onLogout}
+          className="flex flex-col items-center gap-0.5 p-1.5 rounded-xl text-[10px] font-bold text-gray-400 hover:text-white transition-all cursor-pointer"
+          title="Back to Landing Page"
+        >
+          <ArrowLeft className="w-5 h-5 text-[#ED7D31]" />
+          <span>Home</span>
+        </button>
+      </nav>
+
       {/* ================= 2. MAIN CENTER CONTENT AREA ================= */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto pb-24 md:pb-6">
         {currentStep === 'faculty_notes' ? (
           <StudentNotesHub
             user={user}
@@ -1540,13 +1603,23 @@ Grounded in ITM University B.Tech CSE Curriculum
       {/* ================= 3. RIGHT AI SOCRATIC CHAT PANEL (LMS Drawer) ================= */}
       <AnimatePresence>
         {isChatOpen && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 380, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="h-screen bg-white border-l border-borderLight flex flex-col justify-between shadow-2xl z-30 flex-shrink-0 relative overflow-hidden"
-          >
+          <>
+            {/* Mobile Dimmer Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsChatOpen(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 md:hidden"
+            />
+
+            <motion.div
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed inset-y-0 right-0 w-full sm:w-[400px] md:relative md:w-[380px] h-screen bg-white md:border-l border-borderLight flex flex-col justify-between shadow-2xl z-50 md:z-30 flex-shrink-0 overflow-hidden"
+            >
             {/* Drawer Header */}
             <div className="p-4 border-b border-borderLight flex items-center justify-between bg-stone-50">
               <div className="flex items-center gap-2">
@@ -1841,6 +1914,7 @@ Grounded in ITM University B.Tech CSE Curriculum
               </div>
             )}
           </motion.div>
+          </>
         )}
       </AnimatePresence>
 

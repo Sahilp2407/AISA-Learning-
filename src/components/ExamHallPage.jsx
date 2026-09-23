@@ -21,10 +21,18 @@ import {
   Maximize2, 
   Minimize2, 
   EyeOff, 
-  Check 
+  Check,
+  Grid,
+  X 
 } from 'lucide-react';
 import { submitExamAttempt } from '../services/examService';
 import { UNIVERSITY_EXAMS_DATA } from '../data/examPapersData';
+
+// Helper to detect mobile environment (iOS/Android/narrow screen)
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+};
 
 export default function ExamHallPage({
   exam = UNIVERSITY_EXAMS_DATA[0],
@@ -39,6 +47,7 @@ export default function ExamHallPage({
   // Navigation within exam
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [isMobilePaletteOpen, setIsMobilePaletteOpen] = useState(false);
 
   // Answers State
   const [mcqAnswers, setMcqAnswers] = useState({}); // { [qId]: optionIndex }
@@ -110,12 +119,12 @@ export default function ExamHallPage({
     }, 2800);
   };
 
-  // Full-Screen & Viewport dimension change listener (Blocks Edge Copilot, Chrome Side Panel & Split Screen)
+  // Full-Screen & Viewport dimension change listener (Blocks Edge Copilot, Chrome Side Panel & Split Screen on desktop)
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const active = Boolean(document.fullscreenElement);
+      const active = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
       setIsFullscreen(active);
-      if (!active && !isSubmitted) {
+      if (!active && !isSubmitted && !isMobileDevice()) {
         document.body.classList.add('fullscreen-missing');
         showViolationToast('⚠️ Full-Screen exited! Examination canvas is locked to prevent side-panel AI.');
       } else {
@@ -124,7 +133,13 @@ export default function ExamHallPage({
     };
 
     const handleResize = () => {
-      // Check if window is narrow due to Edge sidebar, Chrome side panel, or split-screen
+      // On mobile browsers, viewport size fluctuates due to mobile URL address bars and keyboards,
+      // so narrow-width detection is only relevant for desktop split-screens.
+      if (isMobileDevice()) {
+        setIsSplitScreenDetected(false);
+        return;
+      }
+      // Check if window is narrow due to Edge sidebar, Chrome side panel, or desktop split-screen
       const isNarrow = 
         !document.fullscreenElement && 
         (window.innerWidth < (window.screen.availWidth - 80) || 
@@ -133,6 +148,7 @@ export default function ExamHallPage({
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     window.addEventListener('resize', handleResize);
     
     // Initial check on mount
@@ -141,35 +157,62 @@ export default function ExamHallPage({
 
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       window.removeEventListener('resize', handleResize);
     };
   }, [isSubmitted]);
 
   const requestFullscreenLock = async () => {
     try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
+      if (document.documentElement.requestFullscreen) {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else if (document.documentElement.webkitRequestFullscreen) {
+        if (!document.webkitFullscreenElement) {
+          await document.documentElement.webkitRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        // Fallback for iOS Safari or mobile browsers without standard Fullscreen API
+        setIsFullscreen(true);
       }
-      setIsFullscreen(true);
       setIsWindowBlurred(false);
       setIsSplitScreenDetected(false);
       document.body.classList.remove('fullscreen-missing', 'window-blurred');
     } catch (e) {
-      console.warn('Fullscreen request rejected by browser:', e);
-      showViolationToast('⚠️ Please click "Allow Fullscreen" in your browser.');
+      console.warn('Fullscreen request rejected or not supported by browser:', e);
+      if (isMobileDevice()) {
+        // Gracefully activate Mobile Proctored Mode
+        setIsFullscreen(true);
+        setIsSplitScreenDetected(false);
+        document.body.classList.remove('fullscreen-missing', 'window-blurred');
+        showViolationToast('📱 Mobile Proctored Mode Active. Switching tabs or apps is monitored.');
+      } else {
+        showViolationToast('⚠️ Please click "Allow Fullscreen" in your browser.');
+      }
     }
   };
 
   const toggleFullscreen = async () => {
     try {
-      if (!document.fullscreenElement) {
+      const isCurrentlyFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+      if (!isCurrentlyFs) {
         await requestFullscreenLock();
       } else {
-        await document.exitFullscreen();
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        }
         setIsFullscreen(false);
       }
     } catch (e) {
       console.warn('Fullscreen toggle failed:', e);
+      if (isMobileDevice()) {
+        setIsFullscreen(prev => !prev);
+      }
     }
   };
 
@@ -657,42 +700,44 @@ export default function ExamHallPage({
 
       {/* Mandatory Full-Screen & Anti-Sidebar / Anti-Split-Screen Lockdown Overlay */}
       {(!isFullscreen || isSplitScreenDetected) && !isSubmitted && (
-        <div className="fixed inset-0 z-[999999] bg-[#121110] flex flex-col items-center justify-center p-6 text-center text-white select-none">
-          <div className="w-20 h-20 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-[#ED7D31] flex items-center justify-center mb-5 animate-pulse shadow-2xl">
-            <Maximize2 className="w-10 h-10" />
+        <div className="fixed inset-0 z-[999999] bg-[#121110] flex flex-col items-center justify-center p-4 sm:p-6 text-center text-white select-none overflow-y-auto">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-amber-500/20 border border-amber-500/40 text-[#ED7D31] flex items-center justify-center mb-4 sm:mb-5 animate-pulse shadow-2xl flex-shrink-0">
+            <Maximize2 className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
-          <span className="text-[11px] font-black uppercase tracking-widest text-[#ED7D31] bg-amber-500/10 border border-amber-500/30 px-3.5 py-1 rounded-full mb-3 font-mono">
-            Anti-AI & Side-Panel Proctor Lockdown
+          <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-[#ED7D31] bg-amber-500/10 border border-amber-500/30 px-3.5 py-1 rounded-full mb-3 font-mono">
+            {isMobileDevice() ? '📱 Mobile Proctoring Active' : 'Anti-AI & Side-Panel Proctor Lockdown'}
           </span>
-          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight max-w-md">
-            Full-Screen Mode Required
+          <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight max-w-md">
+            {isMobileDevice() ? 'Mobile Proctored Mode Required' : 'Full-Screen Mode Required'}
           </h2>
-          <p className="text-sm text-stone-300 max-w-lg mt-3 leading-relaxed font-medium">
-            Side panels (Microsoft Copilot, Chrome Side Panel), split-screen windows, and floating AI assistants are strictly prohibited during the examination. Question access is locked until you enter dedicated Full-Screen mode.
+          <p className="text-xs sm:text-sm text-stone-300 max-w-lg mt-3 leading-relaxed font-medium px-2">
+            {isMobileDevice()
+              ? 'To protect examination integrity, please keep this browser tab active. Switching apps, opening split windows, or minimizing will be recorded as proctoring violations.'
+              : 'Side panels (Microsoft Copilot, Chrome Side Panel), split-screen windows, and floating AI assistants are strictly prohibited during the examination. Question access is locked until you enter dedicated Full-Screen mode.'}
           </p>
 
-          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+          <div className="mt-6 flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs sm:max-w-md">
             <button
               type="button"
               onClick={requestFullscreenLock}
-              className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#ED7D31] to-[#E06E22] hover:brightness-110 text-white font-extrabold text-sm shadow-xl shadow-orange-500/30 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-2xl bg-gradient-to-r from-[#ED7D31] to-[#E06E22] hover:brightness-110 text-white font-extrabold text-sm shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
             >
               <Maximize2 className="w-5 h-5" />
-              <span>Enter Full-Screen to Unlock Exam</span>
+              <span>{isMobileDevice() ? 'Start Mobile Proctored Exam' : 'Enter Full-Screen to Unlock Exam'}</span>
             </button>
             <button
               type="button"
               onClick={onExitExam}
-              className="px-6 py-3.5 rounded-2xl bg-stone-800/90 hover:bg-stone-700 text-stone-300 hover:text-white font-bold text-sm border border-stone-700 flex items-center gap-2 cursor-pointer transition-all"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-stone-800/90 hover:bg-stone-700 text-stone-300 hover:text-white font-bold text-sm border border-stone-700 flex items-center justify-center gap-2 cursor-pointer transition-all"
             >
               <ArrowLeft className="w-4 h-4 text-[#ED7D31]" />
               <span>Back to Dashboard</span>
             </button>
           </div>
 
-          <div className="mt-6 p-3 rounded-xl bg-stone-900 border border-stone-800 text-[11px] text-stone-400 font-mono flex items-center gap-2">
+          <div className="mt-6 p-3 rounded-xl bg-stone-900 border border-stone-800 text-[10px] sm:text-[11px] text-stone-400 font-mono flex items-center gap-2 max-w-md">
             <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0" />
-            <span>Exiting full-screen or docking side panels will immediately lock question access.</span>
+            <span>Exiting full-screen or switching tabs will immediately lock question access.</span>
           </div>
         </div>
       )}
@@ -1110,17 +1155,17 @@ export default function ExamHallPage({
           }`}
         >
           {/* Top Proctoring & Security Bar */}
-          <header className="h-16 bg-white/95 border-b border-[#E8DFC8] px-4 sm:px-6 flex items-center justify-between gap-4 z-20 backdrop-blur-md shadow-2xs">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#ED7D31] to-amber-600 text-white flex items-center justify-center font-bold shadow-md shadow-orange-500/20">
-                <GraduationCap className="w-5 h-5" />
+          <header className="h-16 bg-white/95 border-b border-[#E8DFC8] px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4 z-20 backdrop-blur-md shadow-2xs">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#ED7D31] to-amber-600 text-white flex items-center justify-center font-bold shadow-md shadow-orange-500/20 flex-shrink-0">
+                <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] font-bold text-[#ED7D31] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="font-mono text-[9px] sm:text-[10px] font-bold text-[#ED7D31] bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 flex-shrink-0">
                     {exam.code}
                   </span>
-                  <h1 className="font-extrabold text-xs sm:text-sm text-charcoal tracking-tight truncate max-w-[240px] sm:max-w-md">
+                  <h1 className="font-extrabold text-xs sm:text-sm text-charcoal tracking-tight truncate max-w-[120px] xs:max-w-[180px] sm:max-w-md">
                     {exam.title}
                   </h1>
                 </div>
@@ -1130,7 +1175,18 @@ export default function ExamHallPage({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+              {/* Mobile Question Palette Toggle */}
+              <button
+                type="button"
+                onClick={() => setIsMobilePaletteOpen(prev => !prev)}
+                className="md:hidden px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#ED7D31] border border-amber-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                title="Toggle Question Palette"
+              >
+                <Grid className="w-3.5 h-3.5" />
+                <span className="font-mono text-[11px]">{currentGlobalQuestion.globalIndex}/{allQuestions.length}</span>
+              </button>
+
               <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span className="text-emerald-800 font-bold text-[11px]">
@@ -1141,58 +1197,82 @@ export default function ExamHallPage({
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-charcoal border border-stone-200 transition-colors cursor-pointer"
+                className="hidden sm:flex p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-charcoal border border-stone-200 transition-colors cursor-pointer"
                 title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen Exam Mode'}
               >
                 {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
               </button>
 
-              <div className={`px-3.5 py-1.5 rounded-xl flex items-center gap-2 font-mono text-xs sm:text-sm font-black border transition-all ${
+              <div className={`px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl flex items-center gap-1.5 font-mono text-xs sm:text-sm font-black border transition-all ${
                 timeLeftSeconds <= 300 
                   ? 'bg-rose-50 border-rose-300 text-rose-700 animate-pulse' 
                   : 'bg-amber-50 border-amber-200 text-[#ED7D31]'
               }`}>
-                <Clock className="w-4 h-4" />
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                 <span>{formatTimer(timeLeftSeconds)}</span>
               </div>
 
               <button
                 type="button"
                 onClick={() => setShowConfirmation(true)}
-                className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Save & Submit Examination"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Save & Submit</span>
+                <span className="hidden xs:inline">Submit</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleQuitExam}
-                className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-700 hover:text-rose-700 border border-stone-200 hover:border-rose-200 transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs group"
+                className="p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-stone-100 hover:bg-rose-50 text-stone-700 hover:text-rose-700 border border-stone-200 hover:border-rose-200 transition-colors cursor-pointer text-xs font-bold flex items-center gap-1.5 shadow-2xs group"
                 title="Back to Student Dashboard"
               >
                 <ArrowLeft className="w-3.5 h-3.5 text-stone-500 group-hover:text-rose-600 group-hover:-translate-x-0.5 transition-transform" />
-                <span>Back to Dashboard</span>
+                <span className="hidden sm:inline">Back to Dashboard</span>
               </button>
             </div>
           </header>
 
           {/* Main Dual-Pane Exam Layout */}
-          <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-[#FDFCF7]">
+          <div className="flex-1 flex overflow-hidden bg-[#FDFCF7] relative">
+            {/* Mobile Palette Backdrop */}
+            {isMobilePaletteOpen && (
+              <div 
+                onClick={() => setIsMobilePaletteOpen(false)}
+                className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden"
+              />
+            )}
+
             {/* Left Sidebar: Question Palette & Section Nav */}
-            <aside className="w-full md:w-72 lg:w-80 bg-white border-r border-[#E8DFC8] p-4 flex flex-col justify-between overflow-y-auto space-y-4 shadow-2xs">
+            <aside className={`
+              fixed inset-y-0 left-0 z-40 w-[290px] xs:w-80 bg-white border-r border-[#E8DFC8] p-4 flex flex-col justify-between overflow-y-auto space-y-4 shadow-xl transition-transform duration-300 ease-in-out
+              md:relative md:translate-x-0 md:w-72 lg:w-80 md:shadow-2xs md:z-0
+              ${isMobilePaletteOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
               <div className="space-y-4">
+                {/* Mobile Drawer Header */}
+                <div className="flex items-center justify-between md:hidden pb-2 border-b border-[#E8DFC8]">
+                  <span className="text-xs font-black uppercase tracking-wider text-charcoal">Question Navigation</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobilePaletteOpen(false)}
+                    className="p-1 rounded-lg text-charcoal-muted hover:text-charcoal bg-stone-100 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
                 <div className="p-3.5 rounded-2xl bg-[#FAF7EE] border border-[#E8DFC8] flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ED7D31] to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#ED7D31] to-amber-600 text-white flex items-center justify-center font-black text-sm shadow-xs flex-shrink-0">
                     {studentUser.name.charAt(0)}
                   </div>
-                  <div className="text-xs truncate">
+                  <div className="text-xs truncate min-w-0">
                     <p className="font-extrabold text-charcoal truncate">{studentUser.name}</p>
-                    <p className="text-[10px] text-charcoal-muted font-mono">{studentUser.studentId}</p>
+                    <p className="text-[10px] text-charcoal-muted font-mono truncate">{studentUser.studentId}</p>
                     <span className="text-[9px] font-bold text-emerald-700 flex items-center gap-1 mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                      Proctor Active · Camera Verified
+                      Proctor Active
                     </span>
                   </div>
                 </div>
@@ -1213,6 +1293,7 @@ export default function ExamHallPage({
                             setCurrentSectionIdx(sIdx);
                             setCurrentQuestionIdx(0);
                             setSelectedLeftId(null);
+                            setIsMobilePaletteOpen(false);
                           }}
                           className={`w-full p-2.5 rounded-xl text-left text-xs transition-all cursor-pointer flex items-center justify-between border ${
                             isActive 
@@ -1226,7 +1307,7 @@ export default function ExamHallPage({
                             </span>
                             <span className="truncate">{sec.title}</span>
                           </div>
-                          <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold ${
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-mono font-bold flex-shrink-0 ${
                             isActive ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600 border border-stone-200'
                           }`}>
                             {secAnsweredCount}/{sec.questions.length}
@@ -1269,7 +1350,10 @@ export default function ExamHallPage({
                         <button
                           key={q.id}
                           type="button"
-                          onClick={() => handleNavigateQuestion(q.globalIndex)}
+                          onClick={() => {
+                            handleNavigateQuestion(q.globalIndex);
+                            setIsMobilePaletteOpen(false);
+                          }}
                           className={`h-9 rounded-xl border text-xs font-mono transition-all flex items-center justify-center cursor-pointer ${btnStyle}`}
                         >
                           {q.globalIndex}
@@ -1304,7 +1388,10 @@ export default function ExamHallPage({
               <div className="pt-4 border-t border-[#E8DFC8] space-y-2">
                 <button
                   type="button"
-                  onClick={() => setShowConfirmation(true)}
+                  onClick={() => {
+                    setIsMobilePaletteOpen(false);
+                    setShowConfirmation(true);
+                  }}
                   className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Send className="w-4 h-4" />
@@ -1572,34 +1659,34 @@ export default function ExamHallPage({
               </div>
 
               {/* Bottom Sticky Navigation Buttons */}
-              <div className="max-w-3xl w-full mx-auto pt-6 mt-6 border-t border-[#E8DFC8] flex items-center justify-between gap-3">
+              <div className="max-w-3xl w-full mx-auto pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-[#E8DFC8] flex items-center justify-between gap-2 pb-safe">
                 <button
                   type="button"
                   disabled={currentGlobalQuestion.globalIndex <= 1}
                   onClick={handlePrevQuestion}
-                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-charcoal border border-[#E8DFC8] disabled:opacity-30 disabled:cursor-not-allowed font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  className="px-3 sm:px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-charcoal border border-[#E8DFC8] disabled:opacity-30 disabled:cursor-not-allowed font-bold text-xs flex items-center gap-1 sm:gap-1.5 transition-colors cursor-pointer shadow-2xs"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Previous</span>
+                  <span className="hidden xs:inline">Previous</span>
                 </button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     type="button"
                     onClick={() => {
                       handleToggleMarkForReview(currentGlobalQuestion.id);
                       handleNextQuestion();
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition-colors cursor-pointer"
+                    className="px-2.5 sm:px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition-colors cursor-pointer whitespace-nowrap"
                   >
-                    Mark & Next
+                    <span>Mark & Next</span>
                   </button>
 
                   {currentGlobalQuestion.globalIndex < allQuestions.length ? (
                     <button
                       type="button"
                       onClick={handleNextQuestion}
-                      className="gold-button px-5 py-2.5 rounded-xl text-white font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+                      className="gold-button px-3.5 sm:px-5 py-2.5 rounded-xl text-white font-bold text-xs shadow-md flex items-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
                     >
                       <span>Save & Next</span>
                       <ChevronRight className="w-4 h-4" />
@@ -1608,10 +1695,10 @@ export default function ExamHallPage({
                     <button
                       type="button"
                       onClick={() => setShowConfirmation(true)}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-[1.02]"
+                      className="px-4 sm:px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 cursor-pointer transition-all hover:scale-[1.02] whitespace-nowrap"
                     >
                       <Check className="w-4 h-4" />
-                      <span>Save & Submit Final Paper</span>
+                      <span>Submit Paper</span>
                     </button>
                   )}
                 </div>

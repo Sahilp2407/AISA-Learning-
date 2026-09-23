@@ -118,6 +118,9 @@ export default function StudentNotesHub({
     }
   });
 
+  // Mobile responsive Master-Detail view toggle ('list' vs 'reader')
+  const [mobileShowReader, setMobileShowReader] = useState(false);
+
   // Interactive Real-World Analogy toggle per concept index
   const [showAnalogyFor, setShowAnalogyFor] = useState({});
 
@@ -388,7 +391,7 @@ export default function StudentNotesHub({
         
         {/* LEFT COURSE & NOTES DIRECTORY (Collapsible in Focus Mode) */}
         {!isFocusMode && (
-          <aside className="w-80 md:w-96 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 h-[calc(100vh-61px)] overflow-y-auto">
+          <aside className={`${mobileShowReader ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 flex-col flex-shrink-0 h-[calc(100vh-61px)] overflow-y-auto`}>
             
             {/* Search & Filter Header */}
             <div className="p-4 border-b border-slate-100 space-y-3 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
@@ -448,7 +451,10 @@ export default function StudentNotesHub({
                     <motion.div
                       key={note.id}
                       whileHover={{ scale: 1.01 }}
-                      onClick={() => onSelectNote?.(note)}
+                      onClick={() => {
+                        onSelectNote?.(note);
+                        setMobileShowReader(true);
+                      }}
                       className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative ${
                         isSelected
                           ? 'bg-amber-50/70 border-amber-400 shadow-sm ring-1 ring-amber-400/40'
@@ -519,8 +525,20 @@ export default function StudentNotesHub({
         )}
 
         {/* CENTER MAIN READING CANVAS */}
-        <main className="flex-1 bg-[#F8F9FA] h-[calc(100vh-61px)] overflow-y-auto px-4 sm:px-8 py-6">
-          <div className={`mx-auto transition-all ${isFocusMode ? 'max-w-4xl' : 'max-w-3xl'} space-y-8`}>
+        <main className={`${mobileShowReader ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-[#F8F9FA] h-[calc(100vh-61px)] overflow-y-auto px-3 sm:px-8 py-4 sm:py-6`}>
+          <div className={`mx-auto transition-all ${isFocusMode ? 'max-w-4xl' : 'max-w-3xl'} w-full space-y-6 sm:space-y-8`}>
+            
+            {/* Mobile Back Button to Notes Directory */}
+            <div className="md:hidden pb-1">
+              <button
+                type="button"
+                onClick={() => setMobileShowReader(false)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 text-slate-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-[#ED7D31]" />
+                <span>← Back to Course Catalog</span>
+              </button>
+            </div>
             
             {/* If no note selected */}
             {!activeNote ? (

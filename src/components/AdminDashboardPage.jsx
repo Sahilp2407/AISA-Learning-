@@ -57,7 +57,8 @@ import {
   Copy,
   Database,
   ArrowLeft,
-  RotateCcw
+  RotateCcw,
+  Menu
 } from 'lucide-react';
 import { SEMESTERS_DATA } from '../data/curriculumData';
 import { STUDENTS_DATA, FACULTY_DATA } from '../data/studentsData';
@@ -133,6 +134,7 @@ export default function AdminDashboardPage({
 }) {
   const [activeTab, setActiveTab] = useState('students'); // 'students' | 'exam_locks' | 'audit_flags' | 'curriculum'
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileAdminDrawerOpen, setMobileAdminDrawerOpen] = useState(false);
 
   // Student Directory Filter & Modal States
   const [studentSearch, setStudentSearch] = useState('');
@@ -634,10 +636,26 @@ export default function AdminDashboardPage({
     <div className="min-h-screen bg-[#FAFAFA] text-[#1E293B] flex flex-row overflow-hidden font-sans selection:bg-[#ED7D31]/20 selection:text-[#1E293B]">
       
       {/* ================= 1. SLEEK ENTERPRISE ADMIN SIDEBAR ================= */}
+      {/* Mobile Drawer Dimmer Backdrop */}
+      <AnimatePresence>
+        {mobileAdminDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileAdminDrawerOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ================= 1. SLEEK ENTERPRISE ADMIN SIDEBAR ================= */}
       <aside
         className={`${
-          sidebarCollapsed ? 'w-18 px-2' : 'w-64 px-4'
-        } bg-[#0F172A] text-white flex flex-col justify-between py-5 border-r border-slate-800/80 z-30 flex-shrink-0 shadow-2xl transition-all duration-300 ease-in-out`}
+          sidebarCollapsed ? 'md:w-18 md:px-2' : 'md:w-64 md:px-4'
+        } ${
+          mobileAdminDrawerOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } fixed md:relative inset-y-0 left-0 w-72 px-4 bg-[#0F172A] text-white flex flex-col justify-between py-5 border-r border-slate-800/80 z-50 md:z-30 flex-shrink-0 shadow-2xl transition-all duration-300 ease-in-out`}
       >
         <div className="space-y-6">
           {/* Top Brand Logo & Collapse Toggle */}
@@ -646,23 +664,21 @@ export default function AdminDashboardPage({
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ED7D31] via-amber-500 to-orange-600 flex items-center justify-center shadow-md text-white font-bold flex-shrink-0">
                 <ShieldCheck className="w-5 h-5 text-white" />
               </div>
-              {!sidebarCollapsed && (
-                <div className="truncate">
-                  <h2 className="font-sans font-extrabold text-sm text-white tracking-tight leading-none truncate">
-                    AISA Governance
-                  </h2>
-                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
-                    Admin Control
-                  </span>
-                </div>
-              )}
+              <div className="truncate">
+                <h2 className="font-sans font-extrabold text-sm text-white tracking-tight leading-none truncate">
+                  AISA Governance
+                </h2>
+                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider">
+                  Admin Control
+                </span>
+              </div>
             </div>
 
-            {/* Sidebar Collapse Toggle Button */}
+            {/* Desktop Sidebar Collapse Toggle Button */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               title={sidebarCollapsed ? "Expand Sidebar" : "Hide Sidebar"}
-              className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer flex-shrink-0"
+              className="hidden md:flex p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer flex-shrink-0"
             >
               {sidebarCollapsed ? (
                 <PanelLeftOpen className="w-4 h-4 text-[#ED7D31]" />
@@ -670,12 +686,24 @@ export default function AdminDashboardPage({
                 <PanelLeftClose className="w-4 h-4" />
               )}
             </button>
+
+            {/* Mobile Close Drawer Button */}
+            <button
+              onClick={() => setMobileAdminDrawerOpen(false)}
+              className="md:hidden p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer flex-shrink-0"
+              title="Close Navigation"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Navigation Links */}
           <nav className="space-y-1.5 pt-2">
             <button
-              onClick={() => setActiveTab('students')}
+              onClick={() => {
+                setActiveTab('students');
+                setMobileAdminDrawerOpen(false);
+              }}
               title="Student Directory & Reports"
               className={`w-full flex items-center gap-3 ${
                 sidebarCollapsed ? 'justify-center px-0 py-3' : 'px-3.5 py-3'
@@ -697,7 +725,10 @@ export default function AdminDashboardPage({
             </button>
 
             <button
-              onClick={() => setActiveTab('exam_locks')}
+              onClick={() => {
+                setActiveTab('exam_locks');
+                setMobileAdminDrawerOpen(false);
+              }}
               title="Exam Lockouts"
               className={`w-full flex items-center gap-3 ${
                 sidebarCollapsed ? 'justify-center px-0 py-3' : 'px-3.5 py-3'
@@ -712,7 +743,10 @@ export default function AdminDashboardPage({
             </button>
 
             <button
-              onClick={() => setActiveTab('audit_flags')}
+              onClick={() => {
+                setActiveTab('audit_flags');
+                setMobileAdminDrawerOpen(false);
+              }}
               title="AI Flag Audit Queue"
               className={`w-full flex items-center gap-3 ${
                 sidebarCollapsed ? 'justify-center px-0 py-3' : 'px-3.5 py-3'
@@ -736,7 +770,10 @@ export default function AdminDashboardPage({
             </button>
 
             <button
-              onClick={() => setActiveTab('curriculum')}
+              onClick={() => {
+                setActiveTab('curriculum');
+                setMobileAdminDrawerOpen(false);
+              }}
               title="Syllabus Grounding"
               className={`w-full flex items-center gap-3 ${
                 sidebarCollapsed ? 'justify-center px-0 py-3' : 'px-3.5 py-3'
@@ -752,7 +789,10 @@ export default function AdminDashboardPage({
 
             {/* Dedicated Tab 4: Upload Notes & AI Broadcast */}
             <button
-              onClick={() => setActiveTab('notes_upload')}
+              onClick={() => {
+                setActiveTab('notes_upload');
+                setMobileAdminDrawerOpen(false);
+              }}
               title="Upload Notes & AI Broadcast"
               className={`w-full flex items-center gap-3 ${
                 sidebarCollapsed ? 'justify-center px-0 py-3' : 'px-3.5 py-3'
@@ -824,7 +864,17 @@ export default function AdminDashboardPage({
         
         {/* Top Sticky Header */}
         <header className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-6 sm:px-8 py-3.5 flex items-center justify-between gap-4 shadow-xs">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Admin Sidebar Toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileAdminDrawerOpen(true)}
+              className="md:hidden p-2 rounded-xl text-slate-700 hover:text-slate-900 bg-slate-100 border border-slate-200/80 transition-all cursor-pointer flex items-center justify-center shadow-xs"
+              aria-label="Open Admin Navigation"
+            >
+              <Menu className="w-5 h-5 text-[#ED7D31]" />
+            </button>
+
             {/* Back to Home Button */}
             <button
               type="button"
@@ -836,10 +886,10 @@ export default function AdminDashboardPage({
               <span className="hidden sm:inline">Back to Home</span>
             </button>
 
-            {/* Quick Toggle Button in Header */}
+            {/* Desktop Quick Toggle Button in Header */}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+              className="hidden md:flex p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer items-center gap-1.5 text-xs font-semibold shadow-xs"
               title={sidebarCollapsed ? "Expand Sidebar" : "Hide Sidebar"}
             >
               {sidebarCollapsed ? (

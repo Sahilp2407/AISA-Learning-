@@ -22,7 +22,8 @@ import {
   Printer, 
   GraduationCap,
   Link as LinkIcon,
-  Unlink
+  Unlink,
+  Grid
 } from 'lucide-react';
 import { submitExamAttempt } from '../services/examService';
 
@@ -36,6 +37,7 @@ export default function ExaminationModal({
   // Exam progress state
   const [currentSectionIdx, setCurrentSectionIdx] = useState(0);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [isMobileNavigatorOpen, setIsMobileNavigatorOpen] = useState(false);
 
   // Answers State
   const [mcqAnswers, setMcqAnswers] = useState({}); // { [qId]: optionIndex }
@@ -204,6 +206,7 @@ export default function ExaminationModal({
     setCurrentSectionIdx(targetQ.sectionIndex);
     const qIndexInSection = exam.sections[targetQ.sectionIndex].questions.findIndex(q => q.id === targetQ.id);
     setCurrentQuestionIdx(qIndexInSection !== -1 ? qIndexInSection : 0);
+    setIsMobileNavigatorOpen(false);
   };
 
   // Submit Exam
@@ -255,54 +258,65 @@ export default function ExaminationModal({
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col my-auto max-h-[96vh]"
+          className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col my-auto max-h-[96dvh]"
         >
           {/* ================= 1. PROCTORED EXAM HEADER ================= */}
-          <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex flex-wrap items-center justify-between gap-4 border-b border-slate-700">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#ED7D31] to-amber-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/20 font-black text-lg flex-shrink-0">
-                <GraduationCap className="w-6 h-6" />
+          <div className="px-3 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-between gap-2 sm:gap-4 border-b border-slate-700">
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-[#ED7D31] to-amber-500 text-white flex items-center justify-center shadow-lg shadow-orange-500/20 font-black text-base sm:text-lg flex-shrink-0">
+                <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">
-                    {exam.code} · {exam.semester}
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <span className="text-[9px] sm:text-[10px] font-mono font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/30 flex-shrink-0">
+                    {exam.code}
                   </span>
-                  <span className="text-xs text-slate-400 font-semibold">{exam.department}</span>
+                  <span className="text-[10px] sm:text-xs text-slate-400 font-semibold truncate hidden xs:inline">{exam.department}</span>
                 </div>
-                <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight mt-0.5 truncate max-w-[280px] sm:max-w-md">
+                <h2 className="text-xs sm:text-base font-extrabold text-white tracking-tight mt-0.5 truncate max-w-[120px] xs:max-w-[200px] sm:max-w-md">
                   {exam.title}
                 </h2>
               </div>
             </div>
 
-            {/* Timer, Integrity Badge & Close */}
-            <div className="flex items-center gap-3">
+            {/* Timer, Navigator toggle, Integrity Badge & Close */}
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
               {!isSubmitted ? (
                 <>
+                  {/* Mobile Question Navigator Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileNavigatorOpen(prev => !prev)}
+                    className="md:hidden px-2 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-400 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                    title="Toggle Exam Navigator"
+                  >
+                    <Grid className="w-3.5 h-3.5" />
+                    <span className="font-mono text-[11px]">{currentGlobalQ?.globalIndex}/{allQuestions.length}</span>
+                  </button>
+
                   {/* Tab Switch Honor Warning */}
-                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors ${
+                  <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors ${
                     tabSwitchViolations > 0 
                       ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse' 
                       : 'bg-slate-800/80 text-slate-300 border-slate-700'
                   }`}>
                     <ShieldAlert className="w-4 h-4 text-amber-400" />
-                    <span>Integrity: {tabSwitchViolations === 0 ? 'Verified' : `${tabSwitchViolations} Flags`}</span>
+                    <span>{tabSwitchViolations === 0 ? 'Verified' : `${tabSwitchViolations} Flags`}</span>
                   </div>
 
                   {/* Real-time Ticking Countdown Timer */}
-                  <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl border font-mono font-black text-sm shadow-md ${
+                  <div className={`flex items-center gap-1 px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-xl border font-mono font-black text-xs sm:text-sm shadow-md ${
                     timeLeftSeconds < 180 
                       ? 'bg-rose-600 text-white border-rose-500 animate-pulse' 
                       : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
                   }`}>
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-3.5 h-3.5" />
                     <span>{formatTime(timeLeftSeconds)}</span>
                   </div>
                 </>
               ) : (
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/40">
-                  ✓ Graded & Verified
+                <span className="text-[10px] sm:text-xs font-bold text-emerald-400 bg-emerald-500/20 px-2.5 py-1 rounded-xl border border-emerald-500/40">
+                  ✓ Graded
                 </span>
               )}
 
@@ -326,17 +340,38 @@ export default function ExaminationModal({
 
           {/* ================= 2. ACTIVE EXAM HALL VIEW ================= */}
           {!isSubmitted ? (
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative">
+              {/* Mobile Navigator Backdrop */}
+              {isMobileNavigatorOpen && (
+                <div 
+                  onClick={() => setIsMobileNavigatorOpen(false)}
+                  className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden"
+                />
+              )}
+
               {/* Left Column: Question Navigator Palette */}
-              <div className="w-full md:w-72 bg-slate-50 border-r border-slate-200 p-4 sm:p-5 flex flex-col justify-between overflow-y-auto space-y-4">
+              <div className={`
+                fixed inset-y-0 left-0 z-40 w-72 bg-white md:bg-slate-50 border-r border-slate-200 p-4 sm:p-5 flex flex-col justify-between overflow-y-auto space-y-4 shadow-xl transition-transform duration-300 ease-in-out
+                md:relative md:translate-x-0 md:shadow-none md:z-0
+                ${isMobileNavigatorOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+              `}>
                 <div className="space-y-4">
-                  <div>
-                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
-                      Exam Navigator
-                    </h4>
-                    <p className="text-xs font-bold text-slate-700 mt-0.5">
-                      {answeredTotal} of {allQuestions.length} Answered
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                        Exam Navigator
+                      </h4>
+                      <p className="text-xs font-bold text-slate-700 mt-0.5">
+                        {answeredTotal} of {allQuestions.length} Answered
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileNavigatorOpen(false)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-700 md:hidden cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
 
                   {/* Section Switcher Tabs */}
@@ -348,6 +383,7 @@ export default function ExaminationModal({
                         onClick={() => {
                           setCurrentSectionIdx(sIdx);
                           setCurrentQuestionIdx(0);
+                          setIsMobileNavigatorOpen(false);
                         }}
                         className={`w-full p-2.5 rounded-xl text-left text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
                           currentSectionIdx === sIdx 
@@ -682,12 +718,12 @@ export default function ExaminationModal({
                 ) : null}
 
                 {/* Bottom Navigation Buttons */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2 pb-safe">
                   <button
                     type="button"
                     disabled={currentSectionIdx === 0 && currentQuestionIdx === 0}
                     onClick={handlePrev}
-                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <ChevronLeft className="w-4 h-4" />
                     <span>Previous</span>
@@ -697,7 +733,7 @@ export default function ExaminationModal({
                     <button
                       type="button"
                       onClick={handleNext}
-                      className="px-5 py-2.5 rounded-xl bg-[#ED7D31] hover:bg-orange-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-orange-500/20 transition-all hover:scale-105 cursor-pointer"
+                      className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#ED7D31] hover:bg-orange-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-orange-500/20 transition-all hover:scale-105 cursor-pointer whitespace-nowrap"
                     >
                       <span>Save & Next</span>
                       <ArrowRight className="w-4 h-4" />
